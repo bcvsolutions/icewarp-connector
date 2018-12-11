@@ -3,6 +3,7 @@ package eu.bcvsolutions.idm.connector.entity;
 import eu.bcvsolutions.idm.connector.wrapper.Query;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 

@@ -20,7 +20,7 @@ public class Query {
 	private GetAccountProperties getAccountProperties;
 
 	@XmlAttribute
-	private final String xmlns = "\'admin:iq:rpc\'";
+	private final String xmlns = "admin:iq:rpc";
 	@XmlElement
 	private String commandname;
 	@XmlElement(name = "commandparams")

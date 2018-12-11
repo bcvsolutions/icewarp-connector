@@ -44,7 +44,7 @@ public class Connection {
 	private final String AUTHENTICATE="<iq>\n" +
 			"<query xmlns=\"admin:iq:rpc\">\n" +
 			"  <commandname>authenticate</commandname>\n" +
-			"  <commandparams>\n" +
+			"  <commandparams xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"authenticate\">\n" +
 			"    <authtype>0</authtype>\n" +
 			"    <email>idmadmin</email>\n" +
 			"    <password>vdcctr0y</password>\n" +
@@ -67,7 +67,7 @@ public class Connection {
 		iq.setQuery(query);
 
 		try {
-			log.info(getXMLBody(iq));
+			log.info("vygenerovane telo\n" + getXMLBody(iq));
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getXMLBody(iq));
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
@@ -83,6 +83,17 @@ public class Connection {
 			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
 			log.info("sid: " + iqResponse.getSid());
 			this.sid = iqResponse.getSid();
+
+			Filter filter = new Filter();
+			filter.setTypemask("7");
+			GetAccountsInfoList getAccountsInfoList = new GetAccountsInfoList();
+			getAccountsInfoList.setDomainstr(configuration.getDomain());
+			getAccountsInfoList.setCount("20");
+			getAccountsInfoList.setFilter(filter);
+			query.setCommand(getAccountsInfoList);
+			iq.setSid(this.sid);
+			response = post(configuration.getHost() + "/icewarpapi/", getXMLBody(iq));
+			log.info(response.getBody());
 
 		} catch (Exception e) {
 			e.printStackTrace();
