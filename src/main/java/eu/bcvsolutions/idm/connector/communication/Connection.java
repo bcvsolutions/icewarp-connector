@@ -6,6 +6,7 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import eu.bcvsolutions.idm.connector.IceWarpConfiguration;
 import eu.bcvsolutions.idm.connector.IceWarpConnector;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
+import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
 import eu.bcvsolutions.idm.connector.wrapper.Iq;
 import eu.bcvsolutions.idm.connector.wrapper.IqResponse;
 import eu.bcvsolutions.idm.connector.wrapper.Query;
@@ -37,6 +38,8 @@ public class Connection {
 
 	private String sid = "";
 
+	private Iq iq;
+
 	public Connection(IceWarpConfiguration configuration) {
 		this.configuration = configuration;
 	}
@@ -53,7 +56,7 @@ public class Connection {
 			"</query>\n" +
 			"</iq>";
 
-	public void getAuthentication() {
+	public void authenticate() {
 		// send request for authentication and set sid to variable for later
 		Authenticate authenticate = new Authenticate();
 		authenticate.setEmail(configuration.getUsername());
@@ -83,17 +86,34 @@ public class Connection {
 			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
 			log.info("sid: " + iqResponse.getSid());
 			this.sid = iqResponse.getSid();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
-			Filter filter = new Filter();
-			filter.setTypemask("7");
-			GetAccountsInfoList getAccountsInfoList = new GetAccountsInfoList();
-			getAccountsInfoList.setDomainstr(configuration.getDomain());
-			getAccountsInfoList.setCount("20");
-			getAccountsInfoList.setFilter(filter);
-			query.setCommand(getAccountsInfoList);
-			iq.setSid(this.sid);
-			response = post(configuration.getHost() + "/icewarpapi/", getXMLBody(iq));
+	public void getAccountsInfoList() {
+		Filter filter = new Filter();
+		filter.setTypemask("7");
+		GetAccountsInfoList getAccountsInfoList = new GetAccountsInfoList();
+		getAccountsInfoList.setDomainstr(configuration.getDomain());
+		getAccountsInfoList.setCount("20");
+		getAccountsInfoList.setFilter(filter);
+
+		try {
+			log.info("vygenerovane telo\n" + getWrappedXml(getAccountsInfoList));
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getXMLBody(iq));
+			if (response.getStatus() != 200) {
+				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
+			}
 			log.info(response.getBody());
+
+			GetAccountsInfoListResponse getAccountsInfoListResponse = new GetAccountsInfoListResponse();
+			QueryResponse queryResponse = new QueryResponse();
+			queryResponse.setResult(getAccountsInfoListResponse);
+			IqResponse iqResponse = new IqResponse();
+			iqResponse.setQueryResponse(queryResponse);
+
+			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -151,6 +171,15 @@ public class Connection {
 		return null;
 	}
 
+	public String getWrappedXml(Object request) throws JAXBException {
+		Query query = new Query();
+		query.setCommand(request);
+		Iq iq = new Iq();
+		iq.setSid(this.sid);
+		iq.setQuery(query);
+		return getXMLBody(iq);
+	}
+
 	private Object getObject(String xml, Object response) throws JAXBException {
 		InputStream inputStream = new ByteArrayInputStream(xml.getBytes());
 
@@ -160,7 +189,7 @@ public class Connection {
 	}
 
 	// TODO try to make all entities to inherit some class and use it here instead of Object?
-	private String getXMLBody(Object request) throws JAXBException {
+	public String getXMLBody(Object request) throws JAXBException {
 		OutputStream stream = new ByteArrayOutputStream();
 
 		JAXBContext jaxbContext = JAXBContext.newInstance(request.getClass());
