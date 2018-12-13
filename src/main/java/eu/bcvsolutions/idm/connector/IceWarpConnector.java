@@ -4,7 +4,6 @@ import eu.bcvsolutions.idm.connector.communication.Connection;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.Item;
 import eu.bcvsolutions.idm.connector.entity.PropertyVal;
-import eu.bcvsolutions.idm.connector.wrapper.Query;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -51,14 +50,23 @@ public class IceWarpConnector implements Connector,
     private static final Log log = Log.getLog(IceWarpConnector.class);
 
     private IceWarpConfiguration configuration;
+	private Connection connection;
 
-	public static final String NAME = "name";
+    public static final String NAME = "__NAME__";
+	public static final String FIRST_NAME = "firstName";
+	public static final String LAST_NAME = "lastName";
 	public static final String EMAIL = "email";
 	public static final String DISPLAY_EMAIL = "displayEmail";
 	public static final String ACCOUNT_STATE = "accountState";
 	public static final String ADMIN_TYPE = "adminType";
 	public static final String PASSWORD = "__PASSWORD__";
 	public static final String ACCOUNT_TYPE = "accountType";
+
+	public static final String GROUP_NAME = "groupName";
+	public static final String GROUP_ALIAS = "groupAlias";
+
+	public static final String USER = "user";
+	public static final String GROUP = "group";
 
     @Override
     public IceWarpConfiguration getConfiguration() {
@@ -67,16 +75,18 @@ public class IceWarpConnector implements Connector,
 
     @Override
     public void init(final Configuration configuration) {
+		log.info("--- INIT ---");
         this.configuration = (IceWarpConfiguration) configuration;
 		// init connection and authenticate
-		Connection connection = new Connection(this.configuration);
-		connection.authenticate();
+		this.connection = new Connection(this.configuration);
+		this.connection.authenticate();
         log.ok("Connector {0} successfully inited", getClass().getName());
     }
 
     @Override
     public void dispose() {
         // dispose of any resources the this connector uses.
+		log.info("--- DISPOSE ---");
     }
 
     @Override
@@ -84,6 +94,8 @@ public class IceWarpConnector implements Connector,
             final ObjectClass objectClass,
             final Set<Attribute> createAttributes,
             final OperationOptions options) {
+    	log.info("--- CREATE ---");
+		this.connection.createAccount(createAttributes);
 
         return new Uid(UUID.randomUUID().toString());
     }
@@ -94,6 +106,7 @@ public class IceWarpConnector implements Connector,
             final Uid uid,
             final Set<Attribute> replaceAttributes,
             final OperationOptions options) {
+		log.info("--- UPDATE ---");
 
         return uid;
     }
@@ -123,6 +136,7 @@ public class IceWarpConnector implements Connector,
             final ObjectClass objectClass,
             final Uid uid,
             final OperationOptions options) {
+		log.info("--- DELETE ---");
     }
 
     @Override
@@ -131,6 +145,7 @@ public class IceWarpConnector implements Connector,
             final String username,
             final GuardedString password,
             final OperationOptions options) {
+		log.info("--- AUTHENTICATE ---");
 
         return new Uid(username);
     }
@@ -148,25 +163,25 @@ public class IceWarpConnector implements Connector,
     public Schema schema() {
 		ObjectClassInfoBuilder accountObjectClassBuilder = new ObjectClassInfoBuilder();
 		accountObjectClassBuilder.setType(ObjectClass.ACCOUNT_NAME);
-		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(NAME, String.class));
+		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(FIRST_NAME, String.class));
+		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(LAST_NAME, String.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(EMAIL, String.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(DISPLAY_EMAIL, String.class));
-		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_STATE, String.class));
+		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_STATE, Boolean.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ADMIN_TYPE, String.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(PASSWORD, GuardedString.class));
-//		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_TYPE, String.class));
 
 //		accountObjectClassBuilder.addAttributeInfo(
 //				AttributeInfoBuilder.define(CINNOSTI_ROLE).setMultiValued(true).setType(String.class).build());
 
 		ObjectClassInfoBuilder groupObjectClassBuilder = new ObjectClassInfoBuilder();
 		groupObjectClassBuilder.setType(ObjectClass.GROUP_NAME);
-		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(NAME, String.class));
+		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(GROUP_NAME, String.class));
 		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(EMAIL, String.class));
 		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(DISPLAY_EMAIL, String.class));
-		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_STATE, String.class));
+		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_STATE, Boolean.class));
 		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ADMIN_TYPE, String.class));
-//		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_TYPE, String.class));
+		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(GROUP_ALIAS, String.class));
 
 		SchemaBuilder schemaBuilder = new SchemaBuilder(IceWarpConnector.class);
 		schemaBuilder.defineObjectClass(accountObjectClassBuilder.build());
@@ -180,6 +195,7 @@ public class IceWarpConnector implements Connector,
             final SyncToken token,
             final SyncResultsHandler handler,
             final OperationOptions options) {
+		log.info("--- SYNC ---");
     }
 
     @Override
@@ -193,23 +209,6 @@ public class IceWarpConnector implements Connector,
         Connection connection = new Connection(configuration);
 		// otestování autentizace
         connection.authenticate();
-
-		PropertyVal propertyVal = new PropertyVal("TAccountName", "Novák Dařbuján");
-		Item name = new Item("A_Name", propertyVal);
-		PropertyVal propertyVal1 = new PropertyVal("NativeInt", "0");
-		Item type = new Item("U_Type", propertyVal);
-
-		CreateAccount createAccount = new CreateAccount();
-		createAccount.setDomainStr(configuration.getDomain());
-		List<Item> items = Arrays.asList(name, type);
-		createAccount.setItems(items);
-
-		try {
-			log.info(connection.getWrappedXml(createAccount));
-		} catch (JAXBException e) {
-			e.printStackTrace();
-		}
-
     }
 
     @Override
@@ -227,5 +226,8 @@ public class IceWarpConnector implements Connector,
             final IceWarpFilter query,
             final ResultsHandler handler,
             final OperationOptions options) {
+		log.info("--- EXECUTE QUERY ---");
+
     }
+
 }

@@ -5,8 +5,11 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import eu.bcvsolutions.idm.connector.IceWarpConfiguration;
 import eu.bcvsolutions.idm.connector.IceWarpConnector;
+import eu.bcvsolutions.idm.connector.entity.Account;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
+import eu.bcvsolutions.idm.connector.entity.Item;
+import eu.bcvsolutions.idm.connector.entity.PropertyVal;
 import eu.bcvsolutions.idm.connector.wrapper.Iq;
 import eu.bcvsolutions.idm.connector.wrapper.IqResponse;
 import eu.bcvsolutions.idm.connector.wrapper.Query;
@@ -19,6 +22,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -26,6 +32,7 @@ import javax.xml.bind.Unmarshaller;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectionFailedException;
+import org.identityconnectors.framework.common.objects.Attribute;
 
 /**
  * @author Petr Hanák
@@ -37,8 +44,6 @@ public class Connection {
 	private IceWarpConfiguration configuration;
 
 	private String sid = "";
-
-	private Iq iq;
 
 	public Connection(IceWarpConfiguration configuration) {
 		this.configuration = configuration;
@@ -64,14 +69,9 @@ public class Connection {
 		authenticate.setPersistentlogin("1");
 		authenticate.setAuthtype("0");
 
-		Query query = new Query();
-		query.setCommand(authenticate);
-		Iq iq = new Iq();
-		iq.setQuery(query);
-
 		try {
-			log.info("vygenerovane telo\n" + getXMLBody(iq));
-			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getXMLBody(iq));
+			log.info("vygenerovane telo\n" + getWrappedXml(authenticate));
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(authenticate));
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
@@ -86,6 +86,7 @@ public class Connection {
 			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
 			log.info("sid: " + iqResponse.getSid());
 			this.sid = iqResponse.getSid();
+			log.info("this.sid: " + this.sid);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -101,7 +102,7 @@ public class Connection {
 
 		try {
 			log.info("vygenerovane telo\n" + getWrappedXml(getAccountsInfoList));
-			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getXMLBody(iq));
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(getAccountsInfoList));
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
@@ -120,55 +121,93 @@ public class Connection {
 		}
 	}
 
-	public AuthenticateResponse xmlTest() {
-		Authenticate authenticate = new Authenticate();
-		authenticate.setAuthtype("0");
-		authenticate.setEmail(configuration.getUsername());
-		authenticate.setPassword(configuration.getStringPassword());
-		authenticate.setPersistentlogin("1");
 
-		Filter filter = new Filter();
-		filter.setNamemask("ahoj");
-		filter.setTypemask("7");
-		GetAccountsInfoList getAccountsInfoList = new GetAccountsInfoList();
-		getAccountsInfoList.setDomainstr(configuration.getDomain());
-		getAccountsInfoList.setCount("300");
-		getAccountsInfoList.setOffset("0");
-		getAccountsInfoList.setFilter(filter);
+	public void createAccount(Set<Attribute> createAttributes) {
+		Account account = new Account();
+		createAttributes.forEach(attribute -> {
+			if (attribute.getName().equals(IceWarpConnector.NAME)) {
+				account.setObjectId(String.valueOf(attribute.getValue().get(0)));
+				account.setUsername(String.valueOf(attribute.getValue().get(0)));
+				return;
+			}
+			if (attribute.getName().equals(IceWarpConnector.EMAIL)) {
+				account.setEmail(String.valueOf(attribute.getValue().get(0)));
+				return;
+			}
+			if (attribute.getName().equals(IceWarpConnector.FIRST_NAME)) {
+				account.setFirstName(String.valueOf(attribute.getValue().get(0)));
+				return;
+			}
+			if (attribute.getName().equals(IceWarpConnector.LAST_NAME)) {
+				account.setLastName(String.valueOf(attribute.getValue().get(0)));
+				return;
+			}
+			if (attribute.getName().equals(IceWarpConnector.ACCOUNT_STATE)) {
+				if (String.valueOf(attribute.getValue().get(0)).equals("true")) {
+					account.setAccountstate("0");
+				} else {
+					account.setAccountstate("1");
+				}
+				return;
+			}
+			if (attribute.getName().equals(IceWarpConnector.ADMIN_TYPE)) {
+				account.setAdmintype(String.valueOf(attribute.getValue().get(0)));
+				return;
+			} else {
+				account.setAdmintype("0");
+			}
+
+			// roles
+			if (attribute.getName().equals(IceWarpConnector.GROUP_ALIAS)) {
+				List<Object> list = attribute.getValue();
+				account.setGroupAlias(String.valueOf(attribute.getValue().get(0)));
+			}
+			if (attribute.getName().equals(IceWarpConnector.GROUP_NAME)) {
+				account.setGroupName(String.valueOf(attribute.getValue().get(0)));
+			}
+		});
+
+		String fullName = account.getLastName() + " " + account.getFirstName();
+
+		if (configuration.getAccountType().toLowerCase().equals(IceWarpConnector.USER)) {
+			account.setAccounttype("0");
+		} else if (configuration.getAccountType().toLowerCase().equals(IceWarpConnector.GROUP)) {
+			account.setAccounttype("7");
+		}
 
 		CreateAccount createAccount = new CreateAccount();
-		createAccount.setName("Hanák Petr");
-		createAccount.setAccounttype("0");
-		createAccount.setAdmintype("0");
-		createAccount.setAccountstate("1");
-		createAccount.setEmail("petr.hanak@bcvsolutions.eu");
-
-		Query query = new Query();
-
-		Iq iq = new Iq();
-		iq.setSid("insert authentication sidval");
-		iq.setQuery(query);
+		createAccount.setDomainStr(configuration.getDomain());
+		Item name = new Item("A_Name", new PropertyVal("TAccountName", fullName));
+		Item type = new Item("U_Type", new PropertyVal("NativeInt", account.getAccounttype()));
+		Item email = new Item("U_Mailbox", new PropertyVal("TPropertyString", account.getUsername()));
+		Item accountState = new Item("A_State", new PropertyVal("TAccountState", account.getAccountstate()));
+		Item adminType = new Item("A_AdminType", new PropertyVal("TPropertyString", account.getAdmintype()));
+		List<Item> items = Arrays.asList(name, type, email, adminType);
+		createAccount.setItems(items);
 
 		try {
-			query.setCommand(getAccountsInfoList);
-			log.info(getXMLBody(iq));
-			query.setCommand(authenticate);
-			log.info(getXMLBody(iq));
-			query.setCommand(createAccount);
-			log.info(getXMLBody(iq));
+			log.info(getWrappedXml(createAccount));
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
+			if (response.getStatus() != 200) {
+				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
+			}
+			log.info(response.getBody());
 		} catch (JAXBException e) {
 			e.printStackTrace();
 		}
-//		try {
-//			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getXMLBody(authenticateTest));
-//			if (response.getStatus() != 200) {
-//				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
-//			}
-//			return (AuthenticateResponse) getObject(response.getBody(), new AuthenticateResponse());
-//		} catch (JAXBException e) {
-//			e.printStackTrace();
+
+//		if (configuration.getAccountType().equals(IceWarpConnector.USER)) {
+//			accountTypeNum = "0";
+//		} else if(configuration.getAccountType().equals(IceWarpConnector.GROUP)) {
+//			accountTypeNum = "7";
+//		} else {
+//			log.error("Fill account type in configuration!");
 //		}
-		return null;
+//		if (state) {
+//			accState = "0";
+//		} else if (!state) {
+//			accState = "1";
+//		}
 	}
 
 	public String getWrappedXml(Object request) throws JAXBException {

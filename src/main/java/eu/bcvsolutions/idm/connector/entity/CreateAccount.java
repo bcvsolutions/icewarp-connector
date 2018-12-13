@@ -47,20 +47,14 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "CreateAccount")
 public class CreateAccount {
 	@XmlElement
-	private String domainStr;
+	private String domainstr;
 	@XmlElementWrapper(name = "accountproperties")
 	@XmlElement(name = "item")
 	private List<Item> items;
 
-	private String name;
-	private String email;
-	private String displayemail;
-	private String accounttype;
-	private String accountstate;
-	private String admintype;
 
 	public String getDomainStr() {
-		return domainStr;
+		return domainstr;
 	}
 
 	public List<Item> getItems() {
@@ -72,56 +66,6 @@ public class CreateAccount {
 	}
 
 	public void setDomainStr(String domainStr) {
-		this.domainStr = domainStr;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-		// if display email is same as email
-		setDisplayemail(email);
-	}
-
-	public String getDisplayemail() {
-		return displayemail;
-	}
-
-	public void setDisplayemail(String displayemail) {
-		this.displayemail = displayemail;
-	}
-
-	public String getAccounttype() {
-		return accounttype;
-	}
-
-	public void setAccounttype(String accounttype) {
-		this.accounttype = accounttype;
-	}
-
-	public String getAccountstate() {
-		return accountstate;
-	}
-
-	public void setAccountstate(String accountstate) {
-		this.accountstate = accountstate;
-	}
-
-	public String getAdmintype() {
-		return admintype;
-	}
-
-	public void setAdmintype(String admintype) {
-		this.admintype = admintype;
+		this.domainstr = domainStr;
 	}
 }
