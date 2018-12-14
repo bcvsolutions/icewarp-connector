@@ -52,9 +52,12 @@ public class CreateAccount {
 	@XmlElement(name = "item")
 	private List<Item> items;
 
-
 	public String getDomainStr() {
 		return domainstr;
+	}
+
+	public void setDomainStr(String domainStr) {
+		this.domainstr = domainStr;
 	}
 
 	public List<Item> getItems() {
@@ -63,9 +66,5 @@ public class CreateAccount {
 
 	public void setItems(List<Item> items) {
 		this.items = items;
-	}
-
-	public void setDomainStr(String domainStr) {
-		this.domainstr = domainStr;
 	}
 }

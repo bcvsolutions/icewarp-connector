@@ -9,6 +9,8 @@ import eu.bcvsolutions.idm.connector.entity.Account;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
 import eu.bcvsolutions.idm.connector.entity.Item;
+import eu.bcvsolutions.idm.connector.entity.PropertyName;
+import eu.bcvsolutions.idm.connector.entity.PropertyState;
 import eu.bcvsolutions.idm.connector.entity.PropertyVal;
 import eu.bcvsolutions.idm.connector.wrapper.Iq;
 import eu.bcvsolutions.idm.connector.wrapper.IqResponse;
@@ -167,8 +169,6 @@ public class Connection {
 			}
 		});
 
-		String fullName = account.getLastName() + " " + account.getFirstName();
-
 		if (configuration.getAccountType().toLowerCase().equals(IceWarpConnector.USER)) {
 			account.setAccounttype("0");
 		} else if (configuration.getAccountType().toLowerCase().equals(IceWarpConnector.GROUP)) {
@@ -177,37 +177,24 @@ public class Connection {
 
 		CreateAccount createAccount = new CreateAccount();
 		createAccount.setDomainStr(configuration.getDomain());
-		Item name = new Item("A_Name", new PropertyVal("TAccountName", fullName));
+		Item name = new Item("A_Name", new PropertyName(account.getFirstName(), account.getLastName()));
 		Item type = new Item("U_Type", new PropertyVal("NativeInt", account.getAccounttype()));
 		Item email = new Item("U_Mailbox", new PropertyVal("TPropertyString", account.getUsername()));
-		Item accountState = new Item("A_State", new PropertyVal("TAccountState", account.getAccountstate()));
+		Item accountState = new Item("A_State", new PropertyState(account.getAccountstate()));
 		Item adminType = new Item("A_AdminType", new PropertyVal("TPropertyString", account.getAdmintype()));
-		List<Item> items = Arrays.asList(name, type, email, adminType);
+		List<Item> items = Arrays.asList(name, type, email, adminType, accountState);
 		createAccount.setItems(items);
 
 		try {
 			log.info(getWrappedXml(createAccount));
-			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
-			if (response.getStatus() != 200) {
-				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
-			}
-			log.info(response.getBody());
+//			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
+//			if (response.getStatus() != 200) {
+//				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
+//			}
+//			log.info(response.getBody());
 		} catch (JAXBException e) {
 			e.printStackTrace();
 		}
-
-//		if (configuration.getAccountType().equals(IceWarpConnector.USER)) {
-//			accountTypeNum = "0";
-//		} else if(configuration.getAccountType().equals(IceWarpConnector.GROUP)) {
-//			accountTypeNum = "7";
-//		} else {
-//			log.error("Fill account type in configuration!");
-//		}
-//		if (state) {
-//			accState = "0";
-//		} else if (!state) {
-//			accState = "1";
-//		}
 	}
 
 	public String getWrappedXml(Object request) throws JAXBException {

@@ -10,6 +10,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * @author Petr Hanák
+ * item object for setting properties
+ *
 <item>
 	<apiproperty>
 		<propname>stringval</propname>
@@ -30,6 +32,10 @@ public class Item {
 	@XmlElement
 	private PropertyVal propertyval;
 	@XmlElement
+	private PropertyState propertystate;
+	@XmlElement
+	private PropertyName propertyname;
+	@XmlElement
 	private String propertyright;
 
 	public Item() {}
@@ -37,6 +43,18 @@ public class Item {
 	public Item(String propname, PropertyVal propertyval) {
 		this.propname = Arrays.asList(propname);
 		this.propertyval = propertyval;
+		this.propertyright = "2";
+	}
+
+	public Item(String propname, PropertyState propertyState) {
+		this.propname = Arrays.asList(propname);
+		this.propertystate = propertyState;
+		this.propertyright = "2";
+	}
+
+	public Item(String propname, PropertyName propertyName) {
+		this.propname = Arrays.asList(propname);
+		this.propertyname = propertyName;
 		this.propertyright = "2";
 	}
 
