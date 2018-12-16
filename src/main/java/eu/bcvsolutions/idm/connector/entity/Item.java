@@ -31,9 +31,9 @@ public class Item {
 	private List<String> propname;
 	@XmlElement
 	private PropertyVal propertyval;
-	@XmlElement
+	@XmlElement(name = "propertyval")
 	private PropertyState propertystate;
-	@XmlElement
+	@XmlElement(name = "propertyval")
 	private PropertyName propertyname;
 	@XmlElement
 	private String propertyright;

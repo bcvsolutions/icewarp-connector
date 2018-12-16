@@ -1,7 +1,11 @@
 package eu.bcvsolutions.idm.connector.wrapper;
 
+import eu.bcvsolutions.idm.connector.entity.AddAccountMembers;
 import eu.bcvsolutions.idm.connector.entity.Authenticate;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
+import eu.bcvsolutions.idm.connector.entity.DeleteAccountMembers;
+import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
+import eu.bcvsolutions.idm.connector.entity.EditAccountMembers;
 import eu.bcvsolutions.idm.connector.entity.GetAccountProperties;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoList;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -17,9 +21,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Query {
 	private Authenticate authenticate;
+	private AddAccountMembers addAccountMembers;
+	private CreateAccount createAccount;
+	private DeleteAccounts deleteAccounts;
+	private EditAccountMembers editAccountMembers;
+	private DeleteAccountMembers deleteAccountMembers;
 	private GetAccountsInfoList getAccountsInfoList;
 	private GetAccountProperties getAccountProperties;
-	private CreateAccount createAccount;
 
 	@XmlAttribute
 	private final String xmlns = "admin:iq:rpc";

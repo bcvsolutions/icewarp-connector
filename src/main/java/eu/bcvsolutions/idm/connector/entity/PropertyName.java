@@ -10,12 +10,12 @@ import javax.xml.bind.annotation.XmlRootElement;
  * property for name setting
  *
 <propertyval>
-<classname>propertyClassName</classname>
-<state>value</state>
+	<classname>propertyClassName</classname>
+	<state>value</state>
 </propertyval>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "propertyval")
+@XmlRootElement
 public class PropertyName {
 	@XmlElement
 	private final String classname = "TAccountName";

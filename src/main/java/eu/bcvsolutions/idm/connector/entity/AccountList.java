@@ -1,5 +1,6 @@
 package eu.bcvsolutions.idm.connector.entity;
 
+import java.util.Arrays;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -25,17 +26,21 @@ public class AccountList {
 	private final String classname = "TPropertyStringList";
 	@XmlElementWrapper(name = "val")
 	@XmlElement(name = "item")
-	private List<Item> items;
+	private List<String> items;
+
+	public void addAccounts(String... emails) {
+		items.addAll(Arrays.asList(emails));
+	}
 
 	public String getClassname() {
 		return classname;
 	}
 
-	public List<Item> getItems() {
+	public List<String> getItems() {
 		return items;
 	}
 
-	public void setItems(List<Item> items) {
+	public void setItems(List<String> items) {
 		this.items = items;
 	}
 }

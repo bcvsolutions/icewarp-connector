@@ -44,7 +44,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 </iq>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "CreateAccount")
+@XmlRootElement
 public class CreateAccount {
 	@XmlElement
 	private String domainstr;

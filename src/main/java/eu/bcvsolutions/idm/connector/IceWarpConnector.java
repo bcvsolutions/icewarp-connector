@@ -137,6 +137,9 @@ public class IceWarpConnector implements Connector,
             final Uid uid,
             final OperationOptions options) {
 		log.info("--- DELETE ---");
+
+		this.connection.deleteAccount(uid);
+
     }
 
     @Override

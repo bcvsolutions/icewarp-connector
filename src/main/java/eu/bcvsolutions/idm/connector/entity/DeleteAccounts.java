@@ -27,7 +27,33 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class DeleteAccounts {
 	@XmlElement
-	String domainstr;
+	private String domainstr;
 	@XmlElement
-	String leavedata;
+	private AccountList accountList;
+	@XmlElement
+	private String leavedata;
+
+	public String getDomainstr() {
+		return domainstr;
+	}
+
+	public void setDomainstr(String domainstr) {
+		this.domainstr = domainstr;
+	}
+
+	public AccountList getAccountList() {
+		return accountList;
+	}
+
+	public void setAccountList(AccountList accountList) {
+		this.accountList = accountList;
+	}
+
+	public String getLeavedata() {
+		return leavedata;
+	}
+
+	public void setLeavedata(String leavedata) {
+		this.leavedata = leavedata;
+	}
 }

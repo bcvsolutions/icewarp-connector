@@ -6,7 +6,9 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import eu.bcvsolutions.idm.connector.IceWarpConfiguration;
 import eu.bcvsolutions.idm.connector.IceWarpConnector;
 import eu.bcvsolutions.idm.connector.entity.Account;
+import eu.bcvsolutions.idm.connector.entity.AccountList;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
+import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
 import eu.bcvsolutions.idm.connector.entity.Item;
 import eu.bcvsolutions.idm.connector.entity.PropertyName;
@@ -35,6 +37,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectionFailedException;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.Uid;
 
 /**
  * @author Petr Hanák
@@ -187,17 +190,32 @@ public class Connection {
 
 		try {
 			log.info(getWrappedXml(createAccount));
-//			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
-//			if (response.getStatus() != 200) {
-//				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
-//			}
-//			log.info(response.getBody());
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
+			if (response.getStatus() != 200) {
+				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
+			}
+			log.info(response.getBody());
 		} catch (JAXBException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public String getWrappedXml(Object request) throws JAXBException {
+	public void deleteAccount(Uid uid) {
+		AccountList accountList = new AccountList();
+		accountList.addAccounts(uid.getUidValue());
+		DeleteAccounts deleteAccounts = new DeleteAccounts();
+		deleteAccounts.setDomainstr(configuration.getDomain());
+		deleteAccounts.setAccountList(accountList);
+		deleteAccounts.setLeavedata("0");
+
+		try {
+			log.info(getWrappedXml(deleteAccounts));
+		} catch (JAXBException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private String getWrappedXml(Object request) throws JAXBException {
 		Query query = new Query();
 		query.setCommand(request);
 		Iq iq = new Iq();
