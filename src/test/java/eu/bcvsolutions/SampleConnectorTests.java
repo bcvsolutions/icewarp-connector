@@ -28,12 +28,12 @@ public class SampleConnectorTests {
         return factory.newInstance(impl);
     }
 
-    @Test
-    public void basic() {
-        Uid created = newFacade().create(
-                ObjectClass.ACCOUNT,
-                Collections.<Attribute>emptySet(),
-                new OperationOptionsBuilder().build());
-        assertNotNull(created);
-    }
+//    @Test
+//    public void basic() {
+//        Uid created = newFacade().create(
+//                ObjectClass.ACCOUNT,
+//                Collections.<Attribute>emptySet(),
+//                new OperationOptionsBuilder().build());
+//        assertNotNull(created);
+//    }
 }

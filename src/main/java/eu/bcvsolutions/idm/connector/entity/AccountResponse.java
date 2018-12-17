@@ -42,9 +42,11 @@ public class AccountResponse {
 	@XmlElement
 	private String accounttype;
 	@XmlElement
-	private String accountstate;
+	private PropertyState accountstate;
 	@XmlElement
 	private String admintype;
+	@XmlElement
+	private Quota quota;
 
 	// quota and image???
 
@@ -80,14 +82,6 @@ public class AccountResponse {
 		this.accounttype = accounttype;
 	}
 
-	public String getAccountstate() {
-		return accountstate;
-	}
-
-	public void setAccountstate(String accountstate) {
-		this.accountstate = accountstate;
-	}
-
 	public String getAdmintype() {
 		return admintype;
 	}
@@ -96,4 +90,19 @@ public class AccountResponse {
 		this.admintype = admintype;
 	}
 
+	public PropertyState getAccountstate() {
+		return accountstate;
+	}
+
+	public void setAccountstate(PropertyState accountstate) {
+		this.accountstate = accountstate;
+	}
+
+	public Quota getQuota() {
+		return quota;
+	}
+
+	public void setQuota(Quota quota) {
+		this.quota = quota;
+	}
 }
