@@ -19,6 +19,7 @@ import eu.bcvsolutions.idm.connector.entity.Members;
 import eu.bcvsolutions.idm.connector.entity.PropertyName;
 import eu.bcvsolutions.idm.connector.entity.PropertyState;
 import eu.bcvsolutions.idm.connector.entity.PropertyVal;
+import eu.bcvsolutions.idm.connector.entity.SetAccountPassword;
 import eu.bcvsolutions.idm.connector.entity.SetAccountProperties;
 import eu.bcvsolutions.idm.connector.wrapper.Iq;
 import eu.bcvsolutions.idm.connector.wrapper.IqResponse;
@@ -280,6 +281,10 @@ public class Connection {
 				setAccountProperties.addItem(adminType);
 				return;
 			}
+			if (attribute.getName().equals(IceWarpConnector.PASSWORD)) {
+				setAccountPassword(uid.getUidValue(), (GuardedString) attribute.getValue().get(0));
+				return;
+			}
 		});
 
 		try {
@@ -347,6 +352,33 @@ public class Connection {
 		} catch (JAXBException e) {
 			e.printStackTrace();
 			throw new ConnectionFailedException("Cannot add member to group");
+		}
+	}
+
+	public void setAccountPassword(String userUid, GuardedString password) {
+		SetAccountPassword setAccountPassword = new SetAccountPassword();
+		setAccountPassword.setAccountemail(userUid);
+		setAccountPassword.setPassword(getPassword(password));
+
+		QueryResponse queryResponse = new QueryResponse();
+		IqResponse iqResponse = new IqResponse();
+		iqResponse.setQueryResponse(queryResponse);
+
+		try {
+			log.info(getWrappedXml(setAccountPassword));
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(setAccountPassword));
+			if (response.getStatus() != 200) {
+				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
+			}
+			log.info(response.getBody());
+			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
+
+			if (iqResponse.getQueryResponse().getResult().equals("0")) {
+				throw new ConnectionFailedException("Cannot set password");
+			}
+		} catch (JAXBException e) {
+			e.printStackTrace();
+			throw new ConnectionFailedException("Cannot set password");
 		}
 	}
 
