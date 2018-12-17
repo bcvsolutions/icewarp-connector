@@ -8,6 +8,8 @@ import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
 import eu.bcvsolutions.idm.connector.entity.EditAccountMembers;
 import eu.bcvsolutions.idm.connector.entity.GetAccountProperties;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoList;
+import eu.bcvsolutions.idm.connector.entity.SetAccountPassword;
+import eu.bcvsolutions.idm.connector.entity.SetAccountProperties;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -28,6 +30,8 @@ public class Query {
 	private DeleteAccountMembers deleteAccountMembers;
 	private GetAccountsInfoList getAccountsInfoList;
 	private GetAccountProperties getAccountProperties;
+	private SetAccountProperties setAccountProperties;
+	private SetAccountPassword setAccountPassword;
 
 	@XmlAttribute
 	private final String xmlns = "admin:iq:rpc";

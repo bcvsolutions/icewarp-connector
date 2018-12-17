@@ -123,6 +123,7 @@ public class IceWarpConnector implements Connector,
 		}
 		log.info("operation options to string");
 		log.info(options.toString());
+		connection.setAccountProperties(replaceAttributes);
 
         return uid;
     }
@@ -189,9 +190,6 @@ public class IceWarpConnector implements Connector,
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_STATE, Boolean.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ADMIN_TYPE, String.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(PASSWORD, GuardedString.class));
-
-//		accountObjectClassBuilder.addAttributeInfo(
-//				AttributeInfoBuilder.define(CINNOSTI_ROLE).setMultiValued(true).setType(String.class).build());
 
 		ObjectClassInfoBuilder groupObjectClassBuilder = new ObjectClassInfoBuilder();
 		groupObjectClassBuilder.setType(ObjectClass.GROUP_NAME);
@@ -294,11 +292,11 @@ public class IceWarpConnector implements Connector,
 		connection.getAccountsInfoList();
 //		if (getAccountsInfoListResponse != null) {
 //			for (AccountResponse account : getAccountsInfoListResponse.getAccounts()) {
-//				log.info("account.getName(): " + account.getName());
+//				log.info("account.getFirstname(): " + account.getFirstname());
 //			}
 //			ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
 //			builder.setUid(objectId);
-//			builder.setName(objectId);
+//			builder.setFirstname(objectId);
 //			builder.setObjectClass(objectClass);
 //			builder.addAttribute(AttributeBuilder.build("firstname", getAccountPropertiesResponse.getItems().get(0).getPropertyval()));
 //			handler.handle(builder.build());

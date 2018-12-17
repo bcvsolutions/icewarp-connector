@@ -38,7 +38,7 @@ public class Item {
 	@XmlElement(name = "propertyval")
 	private PropertyName propertyname;
 	@XmlElement
-	private String propertyright;
+	private String propertyright = "2";
 
 	public Item() {}
 

@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * @author Petr Hanák
- * property for name setting
+ * property for firstname setting
  *
 <propertyval>
 	<classname>propertyClassName</classname>
@@ -19,8 +19,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class PropertyName {
 	@XmlElement
 	private final String classname = "TAccountName";
-	@XmlElement
-	private String name;
+	@XmlElement(name = "firstname")
+	private String firstname;
 	@XmlElement
 	private String surname;
 
@@ -28,7 +28,7 @@ public class PropertyName {
 	}
 
 	public PropertyName(String name, String surname) {
-		this.name = name;
+		this.firstname = name;
 		this.surname = surname;
 	}
 
@@ -36,12 +36,12 @@ public class PropertyName {
 		return classname;
 	}
 
-	public String getName() {
-		return name;
+	public String getFirstname() {
+		return firstname;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setFirstname(String firstname) {
+		this.firstname = firstname;
 	}
 
 	public String getSurname() {

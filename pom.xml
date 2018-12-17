@@ -18,7 +18,7 @@
     and include the License file at http://opensource.org/licenses/cddl1.php.
     If applicable, add the following below this CDDL Header, with the fields
     enclosed by brackets [] replaced by your own identifying information:
-    "Portions Copyrighted [year] [name of copyright owner]"
+    "Portions Copyrighted [year] [firstname of copyright owner]"
     ====================
 
 --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -34,7 +34,7 @@
   <groupId>eu.bcvsolutions</groupId>
   <artifactId>icewarp-connector</artifactId>
   <version>1.0</version>
-  <name>IceWarp connector</name>
+  <firstname>IceWarp connector</firstname>
   <packaging>jar</packaging>
 
   <properties>

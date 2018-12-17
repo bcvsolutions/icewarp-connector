@@ -55,4 +55,14 @@ public class SetAccountProperties {
 	public void setItems(List<Item> items) {
 		this.items = items;
 	}
+
+	public void addItem(Item item) {
+		items.add(item);
+	}
+
+	public void addItems(Item... items) {
+		for (Item item : items) {
+			this.items.add(item);
+		}
+	}
 }
