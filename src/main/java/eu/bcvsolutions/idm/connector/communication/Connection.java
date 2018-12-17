@@ -7,7 +7,6 @@ import eu.bcvsolutions.idm.connector.IceWarpConfiguration;
 import eu.bcvsolutions.idm.connector.IceWarpConnector;
 import eu.bcvsolutions.idm.connector.entity.Account;
 import eu.bcvsolutions.idm.connector.entity.AccountList;
-import eu.bcvsolutions.idm.connector.entity.AuthenticateResponse;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
@@ -21,7 +20,8 @@ import eu.bcvsolutions.idm.connector.wrapper.Query;
 import eu.bcvsolutions.idm.connector.entity.Authenticate;
 import eu.bcvsolutions.idm.connector.entity.Filter;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoList;
-import eu.bcvsolutions.idm.connector.wrapper.QueryResponse;
+import eu.bcvsolutions.idm.connector.wrapper.QueryResponseAccountInfoList;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -127,7 +127,7 @@ public class Connection {
 		}
 	}
 
-	public IqResponse getAccountsInfoList() {
+	public GetAccountsInfoListResponse getAccountsInfoList() {
 		Filter filter = new Filter();
 		filter.setTypemask("0");
 		GetAccountsInfoList getAccountsInfoList = new GetAccountsInfoList();
@@ -136,8 +136,8 @@ public class Connection {
 		getAccountsInfoList.setFilter(filter);
 
 		GetAccountsInfoListResponse getAccountsInfoListResponse = new GetAccountsInfoListResponse();
-		QueryResponse queryResponse = new QueryResponse();
-		queryResponse.setGetAccountsInfoListResponse(getAccountsInfoListResponse);
+		QueryResponseAccountInfoList queryResponse = new QueryResponseAccountInfoList();
+		queryResponse.setAccountsInfoListResponse(getAccountsInfoListResponse);
 		IqResponse iqResponse = new IqResponse();
 		iqResponse.setQueryResponse(queryResponse);
 
@@ -156,7 +156,7 @@ public class Connection {
 			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
 			log.info(getXMLBody(iqResponse));
 //			log.info("prepared getXMLBody(iqResponse)" + getXMLBody(iqResponse));
-			return (IqResponse) getObject(response.getBody(), iqResponse);
+			return (GetAccountsInfoListResponse) iqResponse.getQueryResponse().getAccountsInfoListResponse();
 
 //			GetAccountsInfoListResponse getAccountsInfoListResponse = (GetAccountsInfoListResponse) iqResponse.getQueryResponse().getResult();
 //			log.info("info list response check: " + getAccountsInfoListResponse.getAccounts().get(0).getName());
@@ -289,7 +289,7 @@ public class Connection {
 	}
 
 //	private IqResponse getResponseObjectBody(Object result) {
-//		QueryResponse queryResponse = new QueryResponse();
+//		QueryResponseAccountInfoList queryResponse = new QueryResponseAccountInfoList();
 //		queryResponse.setResult(result);
 //		IqResponse iqResponse = new IqResponse();
 //		iqResponse.setQueryResponse(queryResponse);

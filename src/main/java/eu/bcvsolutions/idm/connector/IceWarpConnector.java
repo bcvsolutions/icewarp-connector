@@ -54,7 +54,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 @ConnectorClass(configurationClass = IceWarpConfiguration.class, displayNameKey = "icewarp.connector.display")
 public class IceWarpConnector implements Connector,
         CreateOp, UpdateOp, UpdateAttributeValuesOp, DeleteOp,
-        AuthenticateOp, ResolveUsernameApiOp, SchemaOp, SyncOp, TestOp, SearchOp<IceWarpFilter> {
+        AuthenticateOp, ResolveUsernameApiOp, SchemaOp, SyncOp, TestOp, SearchOp<String> {
 
     private static final Log log = Log.getLog(IceWarpConnector.class);
 
@@ -229,63 +229,64 @@ public class IceWarpConnector implements Connector,
 		// otestování autentizace
         connection.authenticate();
 		// test how response looks like
-		IqResponse iqResponse = connection.getAccountsInfoList();
-		try {
-			log.info("iqresponse test konektoru");
-			log.info(connection.getXMLBody(iqResponse));
-		} catch (JAXBException e) {
-			e.printStackTrace();
-		}
+		GetAccountsInfoListResponse iqResponse = connection.getAccountsInfoList();
 	}
 
     @Override
-    public FilterTranslator<IceWarpFilter> createFilterTranslator(
+    public FilterTranslator<String> createFilterTranslator(
             final ObjectClass objectClass,
             final OperationOptions options) {
 
-        return new AbstractFilterTranslator<IceWarpFilter>() {
+		if (objectClass.is(ObjectClass.ACCOUNT_NAME) || objectClass.is(ObjectClass.GROUP_NAME)) {
+			return new AbstractFilterTranslator<String>() {
+				@Override
+				protected String createEqualsExpression(EqualsFilter filter, boolean not) {
+					if (not) {
+						throw new UnsupportedOperationException("This type of equals expression is not allow for now.");
+					}
 
-			@Override
-			protected IceWarpFilter createEqualsExpression(EqualsFilter filter, boolean not) {
-				log.info("CREATE EQUALS EXPRESSION");
-				IceWarpFilter result = new IceWarpFilter();
-				result.setAttr(filter.getName());
-				// TODO
-				if (filter.getAttribute().getValue().size() > 0) {
-					result.setValue(filter.getAttribute().getValue().get(0));
+					Attribute attr = filter.getAttribute();
+
+					if (attr == null || !attr.is(Uid.NAME)) {
+						throw new IllegalArgumentException("Attribute is null or not UID attribute.");
+					}
+
+					return ((Uid) attr).getUidValue();
 				}
-				return result;
-			}
-        };
+			};
+		}
+		return null;
     }
 
     @Override
     public void executeQuery(
             final ObjectClass objectClass,
-            final IceWarpFilter query,
+            final String query,
             final ResultsHandler handler,
             final OperationOptions options) {
 		log.info("--- EXECUTE QUERY ---");
 		// dostanu UID z IDM
-		log.info(query.getAttr() + " " + query.getValue());
+//		log.info(query.getAttr() + " " + query.getValue());
 
-		if (objectClass.getObjectClassValue().equals(configuration.getObject()) &&
-				objectClass.getObjectClassValue().equals(ObjectClass.ACCOUNT_NAME)) {
-
-			if (query != null) {
-				handleUser(objectClass, handler, query.getValue().toString());
-			} else {
-				handleUsers(objectClass, handler);
+		// find one user/group or get all.
+		if (query != null) {
+			if (configuration.getObject().equals(ObjectClass.ACCOUNT_NAME)) {
+				//TODO get one user
+			} else if (configuration.getObject().equals(ObjectClass.GROUP_NAME)) {
+				//TODO get one group
 			}
-		} else if (objectClass.getObjectClassValue().equals(configuration.getObject()) &&
-				objectClass.getObjectClassValue().equals(ObjectClass.GROUP_NAME)) {
+		} else {
+			if (objectClass.getObjectClassValue().equals(configuration.getObject()) &&
+					objectClass.getObjectClassValue().equals(ObjectClass.ACCOUNT_NAME)) {
 
-			if (query != null) {
+				handleUsers(objectClass, handler);
+			} else if (objectClass.getObjectClassValue().equals(configuration.getObject()) &&
+					objectClass.getObjectClassValue().equals(ObjectClass.GROUP_NAME)) {
 
-			} else {
-				handleGroups(objectClass, handler);
+				//TODO handle groups
 			}
 		}
+
     }
 
     private void handleUser(ObjectClass objectClass, ResultsHandler handler, String objectId) {
