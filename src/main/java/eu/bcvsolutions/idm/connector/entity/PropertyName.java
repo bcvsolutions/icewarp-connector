@@ -19,7 +19,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class PropertyName {
 	@XmlElement
 	private final String classname = "TAccountName";
-	@XmlElement(name = "firstname")
+	@XmlElement(name = "name")
 	private String firstname;
 	@XmlElement
 	private String surname;
