@@ -9,6 +9,7 @@ import eu.bcvsolutions.idm.connector.entity.EditAccountMembers;
 import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoList;
 import eu.bcvsolutions.idm.connector.entity.GetAccountProperties;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoList;
+import eu.bcvsolutions.idm.connector.entity.Logout;
 import eu.bcvsolutions.idm.connector.entity.SetAccountPassword;
 import eu.bcvsolutions.idm.connector.entity.SetAccountProperties;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -32,6 +33,7 @@ public class Query {
 	private GetAccountsInfoList getAccountsInfoList;
 	private GetAccountMemberInfoList getAccountMemberInfoList;
 	private GetAccountProperties getAccountProperties;
+	private Logout logout;
 	private SetAccountProperties setAccountProperties;
 	private SetAccountPassword setAccountPassword;
 

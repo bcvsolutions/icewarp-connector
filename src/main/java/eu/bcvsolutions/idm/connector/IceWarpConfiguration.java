@@ -8,10 +8,9 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
 
 public class IceWarpConfiguration extends AbstractConfiguration {
 
-    private String host = "";
-    private String username = "";
+    private String host;
+    private String username;
     private GuardedString password;
-    private String stringPassword;
     private String domain;
 	// user / group
     private String object;
@@ -38,7 +37,7 @@ public class IceWarpConfiguration extends AbstractConfiguration {
 
     @ConfigurationProperty(displayMessageKey = "password.display",
             helpMessageKey = "password.help", order = 3,
-            required = false, confidential = true)
+            required = true, confidential = true)
     public GuardedString getPassword() {
         return password;
     }
@@ -46,18 +45,8 @@ public class IceWarpConfiguration extends AbstractConfiguration {
         this.password = password;
     }
 
-    @ConfigurationProperty(displayMessageKey = "strpassword.display",
-            helpMessageKey = "strpassword.help", order = 4,
-            required = false, confidential = false)
-    public String getStringPassword() {
-        return stringPassword;
-    }
-    public void setStringPassword(String password) {
-        this.stringPassword = password;
-    }
-
     @ConfigurationProperty(displayMessageKey = "domain.display",
-            helpMessageKey = "domain.help", order = 5,
+            helpMessageKey = "domain.help", order = 4,
             required = true, confidential = false)
     public String getDomain() {
         return domain;
@@ -67,7 +56,7 @@ public class IceWarpConfiguration extends AbstractConfiguration {
     }
 
     @ConfigurationProperty(displayMessageKey = "object.display",
-            helpMessageKey = "object.help", order = 6,
+            helpMessageKey = "object.help", order = 5,
             required = true, confidential = false)
     public String getObject() {
         return object;
@@ -78,8 +67,17 @@ public class IceWarpConfiguration extends AbstractConfiguration {
 
     @Override
     public void validate() {
+        if (StringUtil.isBlank(host)) {
+            throw new ConfigurationException("Hostname must not be blank!");
+        }
         if (StringUtil.isBlank(username)) {
             throw new ConfigurationException("Username must not be blank!");
+        }
+        if (StringUtil.isBlank(domain)) {
+            throw new ConfigurationException("Domain must not be blank!");
+        }
+        if (StringUtil.isBlank(object)) {
+            throw new ConfigurationException("Object must not be blank!");
         }
     }
 

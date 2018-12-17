@@ -6,15 +6,14 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import eu.bcvsolutions.idm.connector.IceWarpConfiguration;
 import eu.bcvsolutions.idm.connector.IceWarpConnector;
 import eu.bcvsolutions.idm.connector.entity.Account;
-import eu.bcvsolutions.idm.connector.entity.AccountList;
 import eu.bcvsolutions.idm.connector.entity.AddAccountMembers;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.DeleteAccountMembers;
-import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
 import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoList;
 import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoListResponse;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
 import eu.bcvsolutions.idm.connector.entity.Item;
+import eu.bcvsolutions.idm.connector.entity.Logout;
 import eu.bcvsolutions.idm.connector.entity.MemberItem;
 import eu.bcvsolutions.idm.connector.entity.Members;
 import eu.bcvsolutions.idm.connector.entity.PropertyName;
@@ -68,57 +67,34 @@ public class Connection {
 		this.configuration = configuration;
 	}
 
-	private final String AUTHENTICATE="<iq>\n" +
-			"<query xmlns=\"admin:iq:rpc\">\n" +
-			"  <commandname>authenticate</commandname>\n" +
-			"  <commandparams xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"authenticate\">\n" +
-			"    <authtype>0</authtype>\n" +
-			"    <email>idmadmin</email>\n" +
-			"    <password>vdcctr0y</password>\n" +
-			"    <persistentlogin>1</persistentlogin>\n" +
-			"  </commandparams>\n" +
-			"</query>\n" +
-			"</iq>";
+	public void logout() {
+		Logout logout = new Logout();
 
-	private final String GETACCOUNTINFOLIST = "<result>\n" +
-			"      <item>\n" +
-			"        <name>Jan Novák</name>\n" +
-			"        <email>jnovak@testdomain</email>\n" +
-			"        <displayemail>jnovak@testdomain</displayemail>\n" +
-			"        <accounttype>0</accounttype>\n" +
-			"        <accountstate>\n" +
-			"          <classname>TAccountState</classname>\n" +
-			"          <state>0</state>\n" +
-			"        </accountstate>\n" +
-			"        <admintype>0</admintype>\n" +
-			"        <quota>\n" +
-			"          <classname>TAccountQuota</classname>\n" +
-			"          <mailboxsize>228</mailboxsize>\n" +
-			"          <mailboxquota>0</mailboxquota>\n" +
-			"        </quota>\n" +
-			"      </item>\n" +
-			"      <item>\n" +
-			"        <name>Petr Hanák</name>\n" +
-			"        <email>petr.ha@testdomain</email>\n" +
-			"        <displayemail>petr.ha@testdomain</displayemail>\n" +
-			"        <accounttype>0</accounttype>\n" +
-			"        <accountstate>\n" +
-			"          <classname>TAccountState</classname>\n" +
-			"          <state>0</state>\n" +
-			"        </accountstate>\n" +
-			"        <admintype>0</admintype>\n" +
-			"        <quota>\n" +
-			"          <classname>TAccountQuota</classname>\n" +
-			"          <mailboxsize>228</mailboxsize>\n" +
-			"          <mailboxquota>0</mailboxquota>\n" +
-			"        </quota>\n" +
-			"      </item></result>";
+		QueryResponse queryResponse = new QueryResponse();
+		IqResponse iqResponse = new IqResponse();
+		iqResponse.setQueryResponse(queryResponse);
+		try {
+			log.info(getWrappedXml(logout));
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(logout));
+			if (response.getStatus() != 200) {
+				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
+			}
+			iqResponse = (IqResponse) getObject(response.getBody(), new IqResponse());
+
+			if (iqResponse.getQueryResponse().getResult().equals("0")) {
+				throw new ConnectionFailedException("Logout failed");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new ConnectionFailedException("Logout failed");
+		}
+	}
 
 	public void authenticate() {
 		// send request for authentication and set sid to variable for later
 		Authenticate authenticate = new Authenticate();
 		authenticate.setEmail(configuration.getUsername());
-		authenticate.setPassword(configuration.getStringPassword());
+		authenticate.setPassword(getPassword(configuration.getPassword()));
 		authenticate.setPersistentlogin("1");
 		authenticate.setAuthtype("0");
 
@@ -127,12 +103,10 @@ public class Connection {
 		iqResponse.setQueryResponse(queryResponse);
 
 		try {
-			log.info("vygenerovane telo\n" + getWrappedXml(authenticate));
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(authenticate));
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
-			log.info(response.getBody());
 			iqResponse = (IqResponse) getObject(response.getBody(), new IqResponse());
 
 			if (iqResponse.getQueryResponse().getResult().equals("0")) {
@@ -160,21 +134,12 @@ public class Connection {
 		iqResponse.setQueryResponse(queryResponse);
 
 		try {
-//			GetAccountsInfoListResponse getAccountsInfoListResponse = (GetAccountsInfoListResponse) getObject(GETACCOUNTINFOLIST, new GetAccountsInfoListResponse());
-//			log.info(getXMLBody(getAccountsInfoListResponse));
-//			log.info(getAccountsInfoListResponse.getAccounts().get(0).getFirstname());
-
-			log.info("vygenerovane telo\n" + getWrappedXml(getAccountsInfoList));
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(getAccountsInfoList));
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
-			log.info(response.getBody());
 			iqResponse = (IqResponseAccountInfoList) getObject(response.getBody(), iqResponse);
 			return (GetAccountsInfoListResponse) iqResponse.getQueryResponse().getAccountsInfoListResponse();
-
-//			GetAccountsInfoListResponse getAccountsInfoListResponse = (GetAccountsInfoListResponse) iqResponse.getQueryResponse().getResult();
-//			log.info("info list response check: " + getAccountsInfoListResponse.getAccounts().get(0).getFirstname());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new ConnectionFailedException("Cannot get accounts");
@@ -238,7 +203,6 @@ public class Connection {
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
-			log.info(response.getBody());
 			return account.getEmail();
 		} catch (JAXBException e) {
 			e.printStackTrace();
@@ -289,14 +253,13 @@ public class Connection {
 		});
 
 		try {
-			log.info(getWrappedXml(setAccountProperties));
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(setAccountProperties));
 			if (response.getStatus() != 200) {
-				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
+				throw new ConnectionFailedException("Can't update account properties" + response.getStatus());
 			}
-			log.info(response.getBody());
 		} catch (JAXBException e) {
 			e.printStackTrace();
+			throw new ConnectionFailedException("Can't update account properties");
 		}
 	}
 
@@ -315,10 +278,9 @@ public class Connection {
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
-			log.info(response.getBody());
 			iqResponse = (IqResponseMemberInfoList) getObject(response.getBody(), iqResponse);
 
-			return (GetAccountMemberInfoListResponse) iqResponse.getQueryResponse().getGetAccountMemberInfoListResponse();
+			return iqResponse.getQueryResponse().getGetAccountMemberInfoListResponse();
 
 		} catch (JAXBException e) {
 			e.printStackTrace();
@@ -340,13 +302,10 @@ public class Connection {
 		iqResponse.setQueryResponse(queryResponse);
 
 		try {
-			log.info(getWrappedXml(addAccountMembers));
-
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(addAccountMembers));
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
-			log.info(response.getBody());
 			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
 
 			if (iqResponse.getQueryResponse().getResult().equals("0")) {
@@ -372,13 +331,10 @@ public class Connection {
 		iqResponse.setQueryResponse(queryResponse);
 
 		try {
-			log.info(getWrappedXml(deleteAccountMembers));
-
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(deleteAccountMembers));
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
-			log.info(response.getBody());
 			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
 
 			if (iqResponse.getQueryResponse().getResult().equals("0")) {
@@ -400,12 +356,10 @@ public class Connection {
 		iqResponse.setQueryResponse(queryResponse);
 
 		try {
-			log.info(getWrappedXml(setAccountPassword));
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(setAccountPassword));
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
-			log.info(response.getBody());
 			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
 
 			if (iqResponse.getQueryResponse().getResult().equals("0")) {
@@ -414,21 +368,6 @@ public class Connection {
 		} catch (JAXBException e) {
 			e.printStackTrace();
 			throw new ConnectionFailedException("Cannot set password");
-		}
-	}
-
-	public void deleteAccount(Uid uid) {
-		AccountList accountList = new AccountList();
-		accountList.addAccounts(uid.getUidValue());
-		DeleteAccounts deleteAccounts = new DeleteAccounts();
-		deleteAccounts.setDomainstr(configuration.getDomain());
-		deleteAccounts.setAccountList(accountList);
-		deleteAccounts.setLeavedata("0");
-
-		try {
-			log.info(getWrappedXml(deleteAccounts));
-		} catch (JAXBException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -442,7 +381,7 @@ public class Connection {
 	}
 
 	// TODO try to make all entities to inherit some class and use it here instead of Object?
-	public String getXMLBody(Object request) throws JAXBException {
+	private String getXMLBody(Object request) throws JAXBException {
 		OutputStream stream = new ByteArrayOutputStream();
 
 		JAXBContext jaxbContext = JAXBContext.newInstance(request.getClass());

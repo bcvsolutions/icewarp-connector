@@ -48,8 +48,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  */
 @ConnectorClass(configurationClass = IceWarpConfiguration.class, displayNameKey = "icewarp.connector.display")
 public class IceWarpConnector implements Connector,
-        CreateOp, UpdateOp, UpdateAttributeValuesOp, DeleteOp,
-        AuthenticateOp, ResolveUsernameApiOp, SchemaOp, SyncOp, TestOp, SearchOp<String> {
+        CreateOp, UpdateOp, SchemaOp, TestOp, SearchOp<String> {
 
     private static final Log log = Log.getLog(IceWarpConnector.class);
 
@@ -81,7 +80,6 @@ public class IceWarpConnector implements Connector,
 
     @Override
     public void init(final Configuration configuration) {
-		log.info("--- INIT ---");
         this.configuration = (IceWarpConfiguration) configuration;
 		// init connection and authenticate
 		this.connection = new Connection(this.configuration);
@@ -92,7 +90,7 @@ public class IceWarpConnector implements Connector,
     @Override
     public void dispose() {
         // dispose of any resources the this connector uses.
-		log.info("--- DISPOSE ---");
+		connection.logout();
     }
 
     @Override
@@ -100,7 +98,6 @@ public class IceWarpConnector implements Connector,
             final ObjectClass objectClass,
             final Set<Attribute> createAttributes,
             final OperationOptions options) {
-    	log.info("--- CREATE ---");
 		String account = this.connection.createAccount(createAttributes);
 		return new Uid(account);
     }
@@ -111,69 +108,10 @@ public class IceWarpConnector implements Connector,
             final Uid uid,
             final Set<Attribute> replaceAttributes,
             final OperationOptions options) {
-		log.info("--- UPDATE ---");
-		log.info("Object class");
-		log.info(objectClass.getDisplayNameKey() + " " + objectClass.getObjectClassValue());
-		log.info("Uid");
-		log.info(uid.getUidValue());
-		log.info("replace attributes");
-		for (Attribute attribute : replaceAttributes) {
-			log.info(attribute.getName() + " " + attribute.getValue());
-		}
+
 		connection.setAccountProperties(uid, replaceAttributes);
 
         return uid;
-    }
-
-    @Override
-    public Uid addAttributeValues(
-            final ObjectClass objclass,
-            final Uid uid,
-            final Set<Attribute> valuesToAdd,
-            final OperationOptions options) {
-
-        return uid;
-    }
-
-    @Override
-    public Uid removeAttributeValues(
-            final ObjectClass objclass,
-            final Uid uid,
-            final Set<Attribute> valuesToRemove,
-            final OperationOptions options) {
-
-        return uid;
-    }
-
-    @Override
-    public void delete(
-            final ObjectClass objectClass,
-            final Uid uid,
-            final OperationOptions options) {
-		log.info("--- DELETE ---");
-
-		this.connection.deleteAccount(uid);
-
-    }
-
-    @Override
-    public Uid authenticate(
-            final ObjectClass objectClass,
-            final String username,
-            final GuardedString password,
-            final OperationOptions options) {
-		log.info("--- AUTHENTICATE ---");
-
-        return new Uid(username);
-    }
-
-    @Override
-    public Uid resolveUsername(
-            final ObjectClass objectClass,
-            final String username,
-            final OperationOptions options) {
-
-        return new Uid(username);
     }
 
     @Override
@@ -208,22 +146,7 @@ public class IceWarpConnector implements Connector,
     }
 
     @Override
-    public void sync(
-            final ObjectClass objectClass,
-            final SyncToken token,
-            final SyncResultsHandler handler,
-            final OperationOptions options) {
-		log.info("--- SYNC ---");
-    }
-
-    @Override
-    public SyncToken getLatestSyncToken(final ObjectClass objectClass) {
-        return new SyncToken(null);
-    }
-
-    @Override
     public void test() {
-    	log.info("starting test..");
         Connection connection = new Connection(configuration);
 		// otestování autentizace
         connection.authenticate();
@@ -261,11 +184,9 @@ public class IceWarpConnector implements Connector,
             final String query,
             final ResultsHandler handler,
             final OperationOptions options) {
-		log.info("--- EXECUTE QUERY ---");
 
 		// find one user/group or get all.
 		if (query != null) {
-			log.info("query: " + query);
 			if (configuration.getObject().equals(ObjectClass.ACCOUNT_NAME)) {
 				Filter filter = new Filter();
 				filter.setTypemask(USER_TYPE);
@@ -292,14 +213,12 @@ public class IceWarpConnector implements Connector,
 				handleAccount(objectClass, handler, filter);
 			}
 		}
-
     }
 
 	private void handleAccount(ObjectClass objectClass, ResultsHandler handler, Filter filter) {
 		GetAccountsInfoListResponse accountsInfoList = connection.getAccountsInfoList(filter);
 		if (accountsInfoList != null) {
 			for (AccountResponse account : accountsInfoList.getAccounts()) {
-				log.info("account.getName(): " + account.getName());
 				ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
 				builder.setUid(account.getEmail());
 				builder.setName(account.getEmail());
