@@ -9,6 +9,7 @@ import eu.bcvsolutions.idm.connector.entity.Account;
 import eu.bcvsolutions.idm.connector.entity.AccountList;
 import eu.bcvsolutions.idm.connector.entity.AddAccountMembers;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
+import eu.bcvsolutions.idm.connector.entity.DeleteAccountMembers;
 import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
 import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoList;
 import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoListResponse;
@@ -121,6 +122,10 @@ public class Connection {
 		authenticate.setPersistentlogin("1");
 		authenticate.setAuthtype("0");
 
+		QueryResponse queryResponse = new QueryResponse();
+		IqResponse iqResponse = new IqResponse();
+		iqResponse.setQueryResponse(queryResponse);
+
 		try {
 			log.info("vygenerovane telo\n" + getWrappedXml(authenticate));
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(authenticate));
@@ -128,10 +133,6 @@ public class Connection {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
 			log.info(response.getBody());
-
-			QueryResponse queryResponse = new QueryResponse();
-			IqResponse iqResponse = new IqResponse();
-			iqResponse.setQueryResponse(queryResponse);
 			iqResponse = (IqResponse) getObject(response.getBody(), new IqResponse());
 
 			if (iqResponse.getQueryResponse().getResult().equals("0")) {
@@ -334,7 +335,9 @@ public class Connection {
 		addAccountMembers.setGroupEmail(groupUid);
 		addAccountMembers.setMembers(members);
 
+		QueryResponse queryResponse = new QueryResponse();
 		IqResponse iqResponse = new IqResponse();
+		iqResponse.setQueryResponse(queryResponse);
 
 		try {
 			log.info(getWrappedXml(addAccountMembers));
@@ -352,6 +355,38 @@ public class Connection {
 		} catch (JAXBException e) {
 			e.printStackTrace();
 			throw new ConnectionFailedException("Cannot add member to group");
+		}
+	}
+
+	public void deleteMemberFromGroup(String userUid, String groupUid) {
+		MemberItem member = new MemberItem();
+		member.setUserUid(userUid);
+		Members members = new Members();
+		members.setItems(Collections.singletonList(member));
+		DeleteAccountMembers deleteAccountMembers = new DeleteAccountMembers();
+		deleteAccountMembers.setGroupEmail(groupUid);
+		deleteAccountMembers.setMembers(members);
+
+		QueryResponse queryResponse = new QueryResponse();
+		IqResponse iqResponse = new IqResponse();
+		iqResponse.setQueryResponse(queryResponse);
+
+		try {
+			log.info(getWrappedXml(deleteAccountMembers));
+
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(deleteAccountMembers));
+			if (response.getStatus() != 200) {
+				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
+			}
+			log.info(response.getBody());
+			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
+
+			if (iqResponse.getQueryResponse().getResult().equals("0")) {
+				throw new ConnectionFailedException("Cannot delete member from group");
+			}
+		} catch (JAXBException e) {
+			e.printStackTrace();
+			throw new ConnectionFailedException("Cannot delete member from group");
 		}
 	}
 
