@@ -70,6 +70,7 @@ public class IceWarpConnector implements Connector,
 
 	public static final String GROUP_NAME = "groupName";
 	public static final String GROUP_ALIAS = "groupAlias";
+	public static final String GROUP_MEMBERS = "members";
 
     @Override
     public IceWarpConfiguration getConfiguration() {
@@ -197,7 +198,9 @@ public class IceWarpConnector implements Connector,
 		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_STATE, String.class));
 		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ADMIN_TYPE, Boolean.class));
 		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(GROUP_ALIAS, String.class));
-		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(FULL_NAME, String.class));
+		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(FULL_NAME, String.class));
+		groupObjectClassBuilder.addAttributeInfo(
+				AttributeInfoBuilder.define(GROUP_MEMBERS).setMultiValued(true).setType(String.class).build());
 
 		SchemaBuilder schemaBuilder = new SchemaBuilder(IceWarpConnector.class);
 		schemaBuilder.defineObjectClass(accountObjectClassBuilder.build());
@@ -288,6 +291,7 @@ public class IceWarpConnector implements Connector,
 				Filter filter = new Filter();
 				filter.setTypemask(ROLE_TYPE);
 				handleAccount(objectClass, handler, filter);
+				hadleMembers(objectClass, handler);
 			}
 		}
 
@@ -308,6 +312,10 @@ public class IceWarpConnector implements Connector,
 				handler.handle(builder.build());
 			}
 		}
+	}
+
+	private void hadleMembers(ObjectClass objectClass, ResultsHandler handler) {
+
 	}
 
 }
