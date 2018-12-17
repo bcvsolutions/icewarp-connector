@@ -152,11 +152,15 @@ public class Connection {
 
 	public String createAccount(Set<Attribute> createAttributes) {
 		Account account = new Account();
+		// default value = active user and normal user
+		account.setAccountstate("0");
+		account.setAdmintype("0");
+
 		List<String> groups = new ArrayList<>();
 		GuardedString password = null;
 
 		for (Attribute attribute : createAttributes) {
-			
+
 			if (attribute.getName().equals(IceWarpConnector.NAME)) {
 				account.setEmail(String.valueOf(attribute.getValue().get(0)));
 				continue;
@@ -174,10 +178,8 @@ public class Connection {
 				continue;
 			}
 			if (attribute.getName().equals(IceWarpConnector.ACCOUNT_STATE)) {
-				if (String.valueOf(attribute.getValue().get(0)).equals("true")) {
-					account.setAccountstate("0");
-				} else {
-					account.setAccountstate("1");
+				if (attribute.getValue().get(0) != null) {
+					account.setAccountstate(String.valueOf(attribute.getValue().get(0)));
 				}
 				continue;
 			}
@@ -190,16 +192,19 @@ public class Connection {
 				continue;
 			}
 			if (attribute.getName().equals(IceWarpConnector.ADMIN_TYPE)) {
-				account.setAdmintype(String.valueOf(attribute.getValue().get(0)));
-			} else {
-				account.setAdmintype("0");
+				Boolean adminType = (Boolean) attribute.getValue().get(0);
+				if (adminType != null && adminType) {
+					account.setAdmintype("1");
+				} else {
+					account.setAdmintype("0");
+				}
 			}
 		}
 
-		if (configuration.getObject().toLowerCase().equals(ObjectClass.ACCOUNT_NAME)) {
-			account.setAccounttype("0");
-		} else if (configuration.getObject().toLowerCase().equals(ObjectClass.GROUP_NAME)) {
-			account.setAccounttype("7");
+		if (configuration.getObject().equals(ObjectClass.ACCOUNT_NAME)) {
+			account.setAccounttype(IceWarpConnector.USER_TYPE);
+		} else if (configuration.getObject().equals(ObjectClass.GROUP_NAME)) {
+			account.setAccounttype(IceWarpConnector.ROLE_TYPE);
 		}
 
 		// TODO handle if something is missing
@@ -207,21 +212,30 @@ public class Connection {
 		createAccount.setDomainStr(configuration.getDomain());
 		Item name = new Item("A_Name", new PropertyName(account.getFirstName(), account.getLastName()));
 		Item type = new Item("U_Type", new PropertyVal("NativeInt", account.getAccounttype()));
-		Item email = new Item("U_Mailbox", new PropertyVal("TPropertyString", account.getEmail()));
+		Item email = new Item("U_Mailbox", new PropertyVal("TPropertyString", account.getEmail().split("@")[0]));
 		Item accountState = new Item("A_State", new PropertyState(account.getAccountstate()));
 		Item adminType = new Item("A_AdminType", new PropertyVal("TPropertyString", account.getAdmintype()));
 		List<Item> items = Arrays.asList(name, type, email, adminType, accountState);
 		createAccount.setItems(items);
+
+		QueryResponse queryResponse = new QueryResponse();
+		IqResponse iqResponse = new IqResponse();
+		iqResponse.setQueryResponse(queryResponse);
+
 
 		try {
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
 			if (response.getStatus() != 200) {
 				throw new ConnectorException("Can't connect to system, return code " + response.getStatus());
 			}
+			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
+
+			if (iqResponse.getQueryResponse().getResult().equals("0")) {
+				throw new ConnectorException("Cannot create user " + account.getEmail());
+			}
 			if (!groups.isEmpty()) {
 				groups.forEach(group -> addMemberToGroup(account.getEmail(), group));
 			}
-
 			setAccountPassword(account.getEmail(), password);
 
 			return account.getEmail();
@@ -267,7 +281,14 @@ public class Connection {
 				continue;
 			}
 			if (attribute.getName().equals(IceWarpConnector.ADMIN_TYPE)) {
-				Item adminType = new Item("A_AdminType", new PropertyVal("TPropertyString", String.valueOf(attribute.getValue().get(0))));
+				Boolean adminTypeValue = (Boolean) attribute.getValue().get(0);
+				String type;
+				if (adminTypeValue != null && adminTypeValue) {
+					type = "1";
+				} else {
+					type = "0";
+				}
+				Item adminType = new Item("A_AdminType", new PropertyVal("TPropertyString", type));
 				setAccountProperties.addItem(adminType);
 				continue;
 			}
