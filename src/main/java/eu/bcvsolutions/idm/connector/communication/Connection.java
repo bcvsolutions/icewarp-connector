@@ -33,6 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.xml.bind.JAXBContext;
@@ -166,7 +167,7 @@ public class Connection {
 		}
 	}
 
-	public void createAccount(Set<Attribute> createAttributes) {
+	public String createAccount(Set<Attribute> createAttributes) {
 		Account account = new Account();
 		createAttributes.forEach(attribute -> {
 			if (attribute.getName().equals(IceWarpConnector.NAME)) {
@@ -224,16 +225,23 @@ public class Connection {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
 			log.info(response.getBody());
+			return account.getEmail();
 		} catch (JAXBException e) {
 			e.printStackTrace();
+			throw new ConnectionFailedException("Cannot create");
 		}
 	}
 
-	public void setAccountProperties(Set<Attribute> replaceAttributes) {
+	public void setAccountProperties(Uid uid, Set<Attribute> replaceAttributes) {
 		SetAccountProperties setAccountProperties = new SetAccountProperties();
+
+		// identifier which is email must be set
+		setAccountProperties.setAccountemail(uid.getUidValue());
+
 		PropertyName propertyName = new PropertyName();
 		Item name = new Item();
 		name.setPropertyname(propertyName);
+		name.setPropname(Collections.singletonList("A_Name"));
 		setAccountProperties.addItem(name);
 
 		replaceAttributes.forEach(attribute -> {

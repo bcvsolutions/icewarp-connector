@@ -1,5 +1,7 @@
 package eu.bcvsolutions.idm.connector.entity;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -57,12 +59,16 @@ public class SetAccountProperties {
 	}
 
 	public void addItem(Item item) {
+		if (items == null) {
+			items = new ArrayList<>();
+		}
 		items.add(item);
 	}
 
 	public void addItems(Item... items) {
-		for (Item item : items) {
-			this.items.add(item);
+		if (this.items == null) {
+			this.items = new ArrayList<>();
 		}
+		this.items.addAll(Arrays.asList(items));
 	}
 }

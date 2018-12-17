@@ -3,10 +3,12 @@ package eu.bcvsolutions.idm.connector;
 import eu.bcvsolutions.idm.connector.communication.Connection;
 import eu.bcvsolutions.idm.connector.entity.AccountResponse;
 import eu.bcvsolutions.idm.connector.entity.Filter;
+import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoListResponse;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -99,9 +101,8 @@ public class IceWarpConnector implements Connector,
             final Set<Attribute> createAttributes,
             final OperationOptions options) {
     	log.info("--- CREATE ---");
-		this.connection.createAccount(createAttributes);
-
-        return new Uid(UUID.randomUUID().toString());
+		String account = this.connection.createAccount(createAttributes);
+		return new Uid(account);
     }
 
     @Override
@@ -119,7 +120,7 @@ public class IceWarpConnector implements Connector,
 		for (Attribute attribute : replaceAttributes) {
 			log.info(attribute.getName() + " " + attribute.getValue());
 		}
-		connection.setAccountProperties(replaceAttributes);
+		connection.setAccountProperties(uid, replaceAttributes);
 
         return uid;
     }
@@ -289,7 +290,6 @@ public class IceWarpConnector implements Connector,
 				Filter filter = new Filter();
 				filter.setTypemask(ROLE_TYPE);
 				handleAccount(objectClass, handler, filter);
-				hadleMembers(objectClass, handler);
 			}
 		}
 
@@ -305,15 +305,36 @@ public class IceWarpConnector implements Connector,
 				builder.setName(account.getEmail());
 				builder.setObjectClass(objectClass);
 				builder.addAttribute(AttributeBuilder.build(FULL_NAME, account.getName()));
-				builder.addAttribute(AttributeBuilder.build(ADMIN_TYPE, account.getAdmintype()));
+				builder.addAttribute(AttributeBuilder.build(ADMIN_TYPE, getAdminType(account.getAdmintype())));
 				builder.addAttribute(AttributeBuilder.build(ACCOUNT_STATE, account.getAccountstate().getState()));
+				if (objectClass.getObjectClassValue().equals(configuration.getObject()) &&
+						objectClass.getObjectClassValue().equals(ObjectClass.GROUP_NAME)) {
+					builder.addAttribute(AttributeBuilder.build(GROUP_MEMBERS, handleMembers()));
+				}
+
 				handler.handle(builder.build());
 			}
 		}
 	}
 
-	private void hadleMembers(ObjectClass objectClass, ResultsHandler handler) {
+	private Boolean getAdminType(String admintype) {
+		if (admintype.equals("0")) {
+			return false;
+		}
+		return true;
+    }
 
+	private List<String> handleMembers() {
+		List<String> members = new ArrayList<>();
+		Filter filter = new Filter();
+		filter.setTypemask(ROLE_TYPE);
+		GetAccountsInfoListResponse groups = connection.getAccountsInfoList(filter);
+		groups.getAccounts().forEach(accountResponse -> {
+			String groupName = accountResponse.getName();
+			GetAccountMemberInfoListResponse groupMembers = connection.getGroupMembers(groupName);
+			groupMembers.getItems().forEach(memberResponse -> members.add(memberResponse.getUserUid()));
+		});
+		return members;
 	}
 
 }

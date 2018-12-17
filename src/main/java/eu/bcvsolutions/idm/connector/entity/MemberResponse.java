@@ -20,8 +20,8 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "item")
 public class MemberResponse {
-	@XmlElement
-	private String val;
+	@XmlElement(name = "val")
+	private String userUid;
 	@XmlElement(name = "default")
 	private String def;
 	@XmlElement
@@ -33,12 +33,12 @@ public class MemberResponse {
 	@XmlElement
 	private String params;
 
-	public String getVal() {
-		return val;
+	public String getUserUid() {
+		return userUid;
 	}
 
-	public void setVal(String val) {
-		this.val = val;
+	public void setUserUid(String userUid) {
+		this.userUid = userUid;
 	}
 
 	public String getDef() {
