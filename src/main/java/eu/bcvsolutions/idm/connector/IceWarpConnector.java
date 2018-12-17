@@ -1,9 +1,15 @@
 package eu.bcvsolutions.idm.connector;
 
 import eu.bcvsolutions.idm.connector.communication.Connection;
+import eu.bcvsolutions.idm.connector.entity.AccountResponse;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
+import eu.bcvsolutions.idm.connector.entity.Filter;
+import eu.bcvsolutions.idm.connector.entity.GetAccountProperties;
+import eu.bcvsolutions.idm.connector.entity.GetAccountPropertiesResponse;
+import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
 import eu.bcvsolutions.idm.connector.entity.Item;
 import eu.bcvsolutions.idm.connector.entity.PropertyVal;
+import eu.bcvsolutions.idm.connector.wrapper.IqResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -13,7 +19,9 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.operations.ResolveUsernameApiOp;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
+import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -24,6 +32,7 @@ import org.identityconnectors.framework.common.objects.SyncResultsHandler;
 import org.identityconnectors.framework.common.objects.SyncToken;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
+import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
@@ -65,9 +74,6 @@ public class IceWarpConnector implements Connector,
 	public static final String GROUP_NAME = "groupName";
 	public static final String GROUP_ALIAS = "groupAlias";
 
-	public static final String USER = "user";
-	public static final String GROUP = "group";
-
     @Override
     public IceWarpConfiguration getConfiguration() {
         return configuration;
@@ -107,6 +113,16 @@ public class IceWarpConnector implements Connector,
             final Set<Attribute> replaceAttributes,
             final OperationOptions options) {
 		log.info("--- UPDATE ---");
+		log.info("Object class");
+		log.info(objectClass.getDisplayNameKey() + " " + objectClass.getObjectClassValue());
+		log.info("Uid");
+		log.info(uid.getUidValue());
+		log.info("replace attributes");
+		for (Attribute attribute : replaceAttributes) {
+			log.info(attribute.getName() + " " + attribute.getValue());
+		}
+		log.info("operation options to string");
+		log.info(options.toString());
 
         return uid;
     }
@@ -212,7 +228,15 @@ public class IceWarpConnector implements Connector,
         Connection connection = new Connection(configuration);
 		// otestování autentizace
         connection.authenticate();
-    }
+		// test how response looks like
+		IqResponse iqResponse = connection.getAccountsInfoList();
+		try {
+			log.info("iqresponse test konektoru");
+			log.info(connection.getXMLBody(iqResponse));
+		} catch (JAXBException e) {
+			e.printStackTrace();
+		}
+	}
 
     @Override
     public FilterTranslator<IceWarpFilter> createFilterTranslator(
@@ -220,6 +244,18 @@ public class IceWarpConnector implements Connector,
             final OperationOptions options) {
 
         return new AbstractFilterTranslator<IceWarpFilter>() {
+
+			@Override
+			protected IceWarpFilter createEqualsExpression(EqualsFilter filter, boolean not) {
+				log.info("CREATE EQUALS EXPRESSION");
+				IceWarpFilter result = new IceWarpFilter();
+				result.setAttr(filter.getName());
+				// TODO
+				if (filter.getAttribute().getValue().size() > 0) {
+					result.setValue(filter.getAttribute().getValue().get(0));
+				}
+				return result;
+			}
         };
     }
 
@@ -230,7 +266,50 @@ public class IceWarpConnector implements Connector,
             final ResultsHandler handler,
             final OperationOptions options) {
 		log.info("--- EXECUTE QUERY ---");
+		// dostanu UID z IDM
+		log.info(query.getAttr() + " " + query.getValue());
 
+		if (objectClass.getObjectClassValue().equals(configuration.getObject()) &&
+				objectClass.getObjectClassValue().equals(ObjectClass.ACCOUNT_NAME)) {
+
+			if (query != null) {
+				handleUser(objectClass, handler, query.getValue().toString());
+			} else {
+				handleUsers(objectClass, handler);
+			}
+		} else if (objectClass.getObjectClassValue().equals(configuration.getObject()) &&
+				objectClass.getObjectClassValue().equals(ObjectClass.GROUP_NAME)) {
+
+			if (query != null) {
+
+			} else {
+				handleGroups(objectClass, handler);
+			}
+		}
     }
+
+    private void handleUser(ObjectClass objectClass, ResultsHandler handler, String objectId) {
+//		GetAccountsInfoListResponse getAccountsInfoListResponse = connection.getAccountsInfoList();
+		connection.getAccountsInfoList();
+//		if (getAccountsInfoListResponse != null) {
+//			for (AccountResponse account : getAccountsInfoListResponse.getAccounts()) {
+//				log.info("account.getName(): " + account.getName());
+//			}
+//			ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+//			builder.setUid(objectId);
+//			builder.setName(objectId);
+//			builder.setObjectClass(objectClass);
+//			builder.addAttribute(AttributeBuilder.build("firstname", getAccountPropertiesResponse.getItems().get(0).getPropertyval()));
+//			handler.handle(builder.build());
+//		}
+	}
+
+	private void handleUsers(ObjectClass objectClass, ResultsHandler handler) {
+
+	}
+
+	private void handleGroups(ObjectClass objectClass, ResultsHandler handler) {
+
+	}
 
 }

@@ -14,11 +14,11 @@ public class IceWarpConfiguration extends AbstractConfiguration {
     private String stringPassword;
     private String domain;
 	// user / group
-    private String accountType;
+    private String object;
 
     @ConfigurationProperty(displayMessageKey = "host.display",
             helpMessageKey = "host.help", order = 1,
-            required = false, confidential = false)
+            required = true, confidential = false)
     public String getHost() {
         return host;
     }
@@ -28,7 +28,7 @@ public class IceWarpConfiguration extends AbstractConfiguration {
 
     @ConfigurationProperty(displayMessageKey = "username.display",
             helpMessageKey = "username.help", order = 2,
-            required = false, confidential = false)
+            required = true, confidential = false)
     public String getUsername() {
         return username;
     }
@@ -58,7 +58,7 @@ public class IceWarpConfiguration extends AbstractConfiguration {
 
     @ConfigurationProperty(displayMessageKey = "domain.display",
             helpMessageKey = "domain.help", order = 5,
-            required = false, confidential = false)
+            required = true, confidential = false)
     public String getDomain() {
         return domain;
     }
@@ -66,14 +66,14 @@ public class IceWarpConfiguration extends AbstractConfiguration {
         this.domain = domain;
     }
 
-    @ConfigurationProperty(displayMessageKey = "accounttype.display",
-            helpMessageKey = "accounttype.help", order = 6,
-            required = false, confidential = false)
-    public String getAccountType() {
-        return accountType;
+    @ConfigurationProperty(displayMessageKey = "object.display",
+            helpMessageKey = "object.help", order = 6,
+            required = true, confidential = false)
+    public String getObject() {
+        return object;
     }
-    public void setAccountType(String accountType) {
-        this.accountType = accountType;
+    public void setObject(String object) {
+        this.object = object;
     }
 
     @Override

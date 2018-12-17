@@ -7,6 +7,7 @@ import eu.bcvsolutions.idm.connector.IceWarpConfiguration;
 import eu.bcvsolutions.idm.connector.IceWarpConnector;
 import eu.bcvsolutions.idm.connector.entity.Account;
 import eu.bcvsolutions.idm.connector.entity.AccountList;
+import eu.bcvsolutions.idm.connector.entity.AuthenticateResponse;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
@@ -18,7 +19,6 @@ import eu.bcvsolutions.idm.connector.wrapper.Iq;
 import eu.bcvsolutions.idm.connector.wrapper.IqResponse;
 import eu.bcvsolutions.idm.connector.wrapper.Query;
 import eu.bcvsolutions.idm.connector.entity.Authenticate;
-import eu.bcvsolutions.idm.connector.entity.AuthenticateResponse;
 import eu.bcvsolutions.idm.connector.entity.Filter;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoList;
 import eu.bcvsolutions.idm.connector.wrapper.QueryResponse;
@@ -37,6 +37,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectionFailedException;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
 
 /**
@@ -66,6 +67,40 @@ public class Connection {
 			"</query>\n" +
 			"</iq>";
 
+	private final String GETACCOUNTINFOLIST = "<result>\n" +
+			"      <item>\n" +
+			"        <name>Jan Novák</name>\n" +
+			"        <email>jnovak@testdomain</email>\n" +
+			"        <displayemail>jnovak@testdomain</displayemail>\n" +
+			"        <accounttype>0</accounttype>\n" +
+			"        <accountstate>\n" +
+			"          <classname>TAccountState</classname>\n" +
+			"          <state>0</state>\n" +
+			"        </accountstate>\n" +
+			"        <admintype>0</admintype>\n" +
+			"        <quota>\n" +
+			"          <classname>TAccountQuota</classname>\n" +
+			"          <mailboxsize>228</mailboxsize>\n" +
+			"          <mailboxquota>0</mailboxquota>\n" +
+			"        </quota>\n" +
+			"      </item>\n" +
+			"      <item>\n" +
+			"        <name>Petr Hanák</name>\n" +
+			"        <email>petr.ha@testdomain</email>\n" +
+			"        <displayemail>petr.ha@testdomain</displayemail>\n" +
+			"        <accounttype>0</accounttype>\n" +
+			"        <accountstate>\n" +
+			"          <classname>TAccountState</classname>\n" +
+			"          <state>0</state>\n" +
+			"        </accountstate>\n" +
+			"        <admintype>0</admintype>\n" +
+			"        <quota>\n" +
+			"          <classname>TAccountQuota</classname>\n" +
+			"          <mailboxsize>228</mailboxsize>\n" +
+			"          <mailboxquota>0</mailboxquota>\n" +
+			"        </quota>\n" +
+			"      </item></result>";
+
 	public void authenticate() {
 		// send request for authentication and set sid to variable for later
 		Authenticate authenticate = new Authenticate();
@@ -82,50 +117,56 @@ public class Connection {
 			}
 			log.info(response.getBody());
 
-			AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-			QueryResponse queryResponse = new QueryResponse();
-			queryResponse.setResult(authenticateResponse);
-			IqResponse iqResponse = new IqResponse();
-			iqResponse.setQueryResponse(queryResponse);
-
-			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
-			log.info("sid: " + iqResponse.getSid());
+//			IqResponse iqResponse = getResponseObjectBody(new AuthenticateResponse());
+			IqResponse iqResponse = (IqResponse) getObject(response.getBody(), new IqResponse());
 			this.sid = iqResponse.getSid();
-			log.info("this.sid: " + this.sid);
+
+//			AuthenticateResponse authenticateResponse = (AuthenticateResponse)iqResponse.getQueryResponse().getResult();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void getAccountsInfoList() {
+	public IqResponse getAccountsInfoList() {
 		Filter filter = new Filter();
-		filter.setTypemask("7");
+		filter.setTypemask("0");
 		GetAccountsInfoList getAccountsInfoList = new GetAccountsInfoList();
 		getAccountsInfoList.setDomainstr(configuration.getDomain());
-		getAccountsInfoList.setCount("20");
+		getAccountsInfoList.setCount("5");
 		getAccountsInfoList.setFilter(filter);
 
+		GetAccountsInfoListResponse getAccountsInfoListResponse = new GetAccountsInfoListResponse();
+		QueryResponse queryResponse = new QueryResponse();
+		queryResponse.setGetAccountsInfoListResponse(getAccountsInfoListResponse);
+		IqResponse iqResponse = new IqResponse();
+		iqResponse.setQueryResponse(queryResponse);
+
 		try {
+//			GetAccountsInfoListResponse getAccountsInfoListResponse = (GetAccountsInfoListResponse) getObject(GETACCOUNTINFOLIST, new GetAccountsInfoListResponse());
+//			log.info(getXMLBody(getAccountsInfoListResponse));
+//			log.info(getAccountsInfoListResponse.getAccounts().get(0).getName());
+
 			log.info("vygenerovane telo\n" + getWrappedXml(getAccountsInfoList));
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(getAccountsInfoList));
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
 			log.info(response.getBody());
-
-			GetAccountsInfoListResponse getAccountsInfoListResponse = new GetAccountsInfoListResponse();
-			QueryResponse queryResponse = new QueryResponse();
-			queryResponse.setResult(getAccountsInfoListResponse);
-			IqResponse iqResponse = new IqResponse();
-			iqResponse.setQueryResponse(queryResponse);
-
+			log.info(getXMLBody(iqResponse));
 			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
+			log.info(getXMLBody(iqResponse));
+//			log.info("prepared getXMLBody(iqResponse)" + getXMLBody(iqResponse));
+			return (IqResponse) getObject(response.getBody(), iqResponse);
 
+//			GetAccountsInfoListResponse getAccountsInfoListResponse = (GetAccountsInfoListResponse) iqResponse.getQueryResponse().getResult();
+//			log.info("info list response check: " + getAccountsInfoListResponse.getAccounts().get(0).getName());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
 
+//		return (GetAccountsInfoListResponse) iqResponse.getQueryResponse().getResult();
+		return null;
+	}
 
 	public void createAccount(Set<Attribute> createAttributes) {
 		Account account = new Account();
@@ -172,12 +213,13 @@ public class Connection {
 			}
 		});
 
-		if (configuration.getAccountType().toLowerCase().equals(IceWarpConnector.USER)) {
+		if (configuration.getObject().toLowerCase().equals(ObjectClass.ACCOUNT_NAME)) {
 			account.setAccounttype("0");
-		} else if (configuration.getAccountType().toLowerCase().equals(IceWarpConnector.GROUP)) {
+		} else if (configuration.getObject().toLowerCase().equals(ObjectClass.GROUP_NAME)) {
 			account.setAccounttype("7");
 		}
 
+		// TODO handle if something is missing
 		CreateAccount createAccount = new CreateAccount();
 		createAccount.setDomainStr(configuration.getDomain());
 		Item name = new Item("A_Name", new PropertyName(account.getFirstName(), account.getLastName()));
@@ -189,7 +231,6 @@ public class Connection {
 		createAccount.setItems(items);
 
 		try {
-			log.info(getWrappedXml(createAccount));
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
 			if (response.getStatus() != 200) {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
@@ -224,14 +265,6 @@ public class Connection {
 		return getXMLBody(iq);
 	}
 
-	private Object getObject(String xml, Object response) throws JAXBException {
-		InputStream inputStream = new ByteArrayInputStream(xml.getBytes());
-
-		JAXBContext jaxbContext = JAXBContext.newInstance(response.getClass());
-		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-		return unmarshaller.unmarshal(inputStream);
-	}
-
 	// TODO try to make all entities to inherit some class and use it here instead of Object?
 	public String getXMLBody(Object request) throws JAXBException {
 		OutputStream stream = new ByteArrayOutputStream();
@@ -242,6 +275,26 @@ public class Connection {
 		marshaller.marshal(request, stream);
 		return stream.toString();
 	}
+//
+//	private Object getUnwrappedObject(IqResponse iqResponse) {
+//		return iqResponse.getQueryResponse().getResult();
+//	}
+
+	private Object getObject(String xml, Object response) throws JAXBException {
+		InputStream inputStream = new ByteArrayInputStream(xml.getBytes());
+
+		JAXBContext jaxbContext = JAXBContext.newInstance(response.getClass());
+		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+		return unmarshaller.unmarshal(inputStream);
+	}
+
+//	private IqResponse getResponseObjectBody(Object result) {
+//		QueryResponse queryResponse = new QueryResponse();
+//		queryResponse.setResult(result);
+//		IqResponse iqResponse = new IqResponse();
+//		iqResponse.setQueryResponse(queryResponse);
+//		return iqResponse;
+//	}
 
 	private HttpResponse<String> post(String url, String body) {
 		try {

@@ -1,10 +1,12 @@
 package eu.bcvsolutions.idm.connector.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 /**
  *
@@ -37,9 +39,19 @@ import javax.xml.bind.annotation.XmlRootElement;
  </iq>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "getaccountsinfolist")
+@XmlType(name = "result")
 public class GetAccountsInfoListResponse {
-	@XmlElement
-	protected List<AccountResponse> accounts;
+	@XmlElement(name = "item")
+	private List<AccountResponse> accounts;
 
+	public List<AccountResponse> getAccounts() {
+		if (accounts == null) {
+			accounts = new ArrayList<AccountResponse>();
+		}
+		return accounts;
+	}
+
+	public void setAccounts(List<AccountResponse> accounts) {
+		this.accounts = accounts;
+	}
 }

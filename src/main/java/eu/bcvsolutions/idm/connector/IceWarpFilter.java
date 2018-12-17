@@ -1,13 +1,14 @@
 package eu.bcvsolutions.idm.connector;
 
 /**
+ * @author Petr Hanák
  * This implementation depends on the logic that this connector follows.
+ *
  */
 public class IceWarpFilter {
 
 	private String attr;
 	private Object value;
-
 
 	public String getAttr() {
 		return attr;

@@ -31,8 +31,10 @@ public class Item {
 	private List<String> propname;
 	@XmlElement
 	private PropertyVal propertyval;
+
 	@XmlElement(name = "propertyval")
 	private PropertyState propertystate;
+
 	@XmlElement(name = "propertyval")
 	private PropertyName propertyname;
 	@XmlElement
@@ -58,8 +60,8 @@ public class Item {
 		this.propertyright = "2";
 	}
 
-	public List<String> getPropname() {
-		return propname;
+	public String getPropname() {
+		return propname.get(0);
 	}
 
 	public void setPropname(List<String> propname) {
@@ -72,6 +74,22 @@ public class Item {
 
 	public void setPropertyval(PropertyVal propertyval) {
 		this.propertyval = propertyval;
+	}
+
+	public PropertyState getPropertystate() {
+		return propertystate;
+	}
+
+	public void setPropertystate(PropertyState propertystate) {
+		this.propertystate = propertystate;
+	}
+
+	public PropertyName getPropertyname() {
+		return propertyname;
+	}
+
+	public void setPropertyname(PropertyName propertyname) {
+		this.propertyname = propertyname;
 	}
 
 	public String getPropertyright() {

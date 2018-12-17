@@ -31,27 +31,69 @@ import javax.xml.bind.annotation.XmlType;
  </item>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "item", propOrder = {
-		"name",
-		"email",
-		"displayemail",
-		"accounttype",
-		"accountstate",
-		"admintype"
-})
+@XmlRootElement(name = "item")
 public class AccountResponse {
 	@XmlElement
-	protected String name;
+	private String name;
 	@XmlElement
-	protected String email;
+	private String email;
 	@XmlElement
-	protected String displayemail;
+	private String displayemail;
 	@XmlElement
-	protected String accounttype;
+	private String accounttype;
 	@XmlElement
-	protected String accountstate;
+	private String accountstate;
 	@XmlElement
-	protected String admintype;
+	private String admintype;
 
 	// quota and image???
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getDisplayemail() {
+		return displayemail;
+	}
+
+	public void setDisplayemail(String displayemail) {
+		this.displayemail = displayemail;
+	}
+
+	public String getAccounttype() {
+		return accounttype;
+	}
+
+	public void setAccounttype(String accounttype) {
+		this.accounttype = accounttype;
+	}
+
+	public String getAccountstate() {
+		return accountstate;
+	}
+
+	public void setAccountstate(String accountstate) {
+		this.accountstate = accountstate;
+	}
+
+	public String getAdmintype() {
+		return admintype;
+	}
+
+	public void setAdmintype(String admintype) {
+		this.admintype = admintype;
+	}
+
 }

@@ -1,10 +1,14 @@
 package eu.bcvsolutions.idm.connector.wrapper;
 
+import eu.bcvsolutions.idm.connector.entity.AuthenticateResponse;
+import eu.bcvsolutions.idm.connector.entity.GetAccountPropertiesResponse;
+import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 /**
  * @author Petr Hanák
@@ -15,7 +19,7 @@ public class IqResponse {
 	@XmlAttribute
 	private String sid;
 
-	@XmlElement
+	@XmlElement(name = "query")
 	private QueryResponse queryResponse;
 
 	public String getSid() {
