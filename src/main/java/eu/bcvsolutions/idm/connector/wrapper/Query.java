@@ -6,6 +6,7 @@ import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.DeleteAccountMembers;
 import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
 import eu.bcvsolutions.idm.connector.entity.EditAccountMembers;
+import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoList;
 import eu.bcvsolutions.idm.connector.entity.GetAccountProperties;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoList;
 import eu.bcvsolutions.idm.connector.entity.SetAccountPassword;
@@ -29,6 +30,7 @@ public class Query {
 	private EditAccountMembers editAccountMembers;
 	private DeleteAccountMembers deleteAccountMembers;
 	private GetAccountsInfoList getAccountsInfoList;
+	private GetAccountMemberInfoList getAccountMemberInfoList;
 	private GetAccountProperties getAccountProperties;
 	private SetAccountProperties setAccountProperties;
 	private SetAccountPassword setAccountPassword;

@@ -119,8 +119,6 @@ public class IceWarpConnector implements Connector,
 		for (Attribute attribute : replaceAttributes) {
 			log.info(attribute.getName() + " " + attribute.getValue());
 		}
-		log.info("operation options to string");
-		log.info(options.toString());
 		connection.setAccountProperties(replaceAttributes);
 
         return uid;
