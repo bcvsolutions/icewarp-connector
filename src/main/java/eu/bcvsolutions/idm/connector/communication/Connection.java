@@ -9,6 +9,8 @@ import eu.bcvsolutions.idm.connector.entity.Account;
 import eu.bcvsolutions.idm.connector.entity.AccountList;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
+import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoList;
+import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoListResponse;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
 import eu.bcvsolutions.idm.connector.entity.Item;
 import eu.bcvsolutions.idm.connector.entity.PropertyName;
@@ -17,12 +19,15 @@ import eu.bcvsolutions.idm.connector.entity.PropertyVal;
 import eu.bcvsolutions.idm.connector.entity.SetAccountProperties;
 import eu.bcvsolutions.idm.connector.wrapper.Iq;
 import eu.bcvsolutions.idm.connector.wrapper.IqResponse;
+import eu.bcvsolutions.idm.connector.wrapper.IqResponseAccountInfoList;
+import eu.bcvsolutions.idm.connector.wrapper.IqResponseMemberInfoList;
 import eu.bcvsolutions.idm.connector.wrapper.Query;
 import eu.bcvsolutions.idm.connector.entity.Authenticate;
 import eu.bcvsolutions.idm.connector.entity.Filter;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoList;
 import eu.bcvsolutions.idm.connector.wrapper.QueryResponseAccountInfoList;
 
+import eu.bcvsolutions.idm.connector.wrapper.QueryResponseMemberInfoList;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -118,7 +123,6 @@ public class Connection {
 			}
 			log.info(response.getBody());
 
-//			IqResponse iqResponse = getResponseObjectBody(new AuthenticateResponse());
 			IqResponse iqResponse = (IqResponse) getObject(response.getBody(), new IqResponse());
 			this.sid = iqResponse.getSid();
 
@@ -137,7 +141,7 @@ public class Connection {
 		GetAccountsInfoListResponse getAccountsInfoListResponse = new GetAccountsInfoListResponse();
 		QueryResponseAccountInfoList queryResponse = new QueryResponseAccountInfoList();
 		queryResponse.setAccountsInfoListResponse(getAccountsInfoListResponse);
-		IqResponse iqResponse = new IqResponse();
+		IqResponseAccountInfoList iqResponse = new IqResponseAccountInfoList();
 		iqResponse.setQueryResponse(queryResponse);
 
 		try {
@@ -151,20 +155,15 @@ public class Connection {
 				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
 			}
 			log.info(response.getBody());
-			log.info(getXMLBody(iqResponse));
-			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
-			log.info(getXMLBody(iqResponse));
-//			log.info("prepared getXMLBody(iqResponse)" + getXMLBody(iqResponse));
+			iqResponse = (IqResponseAccountInfoList) getObject(response.getBody(), iqResponse);
 			return (GetAccountsInfoListResponse) iqResponse.getQueryResponse().getAccountsInfoListResponse();
 
 //			GetAccountsInfoListResponse getAccountsInfoListResponse = (GetAccountsInfoListResponse) iqResponse.getQueryResponse().getResult();
 //			log.info("info list response check: " + getAccountsInfoListResponse.getAccounts().get(0).getFirstname());
 		} catch (Exception e) {
 			e.printStackTrace();
+			throw new ConnectionFailedException("Cannot get accounts");
 		}
-
-//		return (GetAccountsInfoListResponse) iqResponse.getQueryResponse().getResult();
-		return null;
 	}
 
 	public void createAccount(Set<Attribute> createAttributes) {
@@ -275,6 +274,32 @@ public class Connection {
 		}
 	}
 
+	public GetAccountMemberInfoListResponse getGroupMembers(String uid) {
+		GetAccountMemberInfoList getAccountMemberInfoList = new GetAccountMemberInfoList();
+		getAccountMemberInfoList.setGroupUid(uid);
+
+		GetAccountMemberInfoListResponse getAccountMemberInfoListResponse = new GetAccountMemberInfoListResponse();
+		QueryResponseMemberInfoList queryResponse = new QueryResponseMemberInfoList();
+		queryResponse.setGetAccountMemberInfoListResponse(getAccountMemberInfoListResponse);
+		IqResponseMemberInfoList iqResponse = new IqResponseMemberInfoList();
+		iqResponse.setQueryResponse(queryResponse);
+
+		try {
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(getAccountMemberInfoList));
+			if (response.getStatus() != 200) {
+				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
+			}
+			log.info(response.getBody());
+			iqResponse = (IqResponseMemberInfoList) getObject(response.getBody(), iqResponse);
+
+			return (GetAccountMemberInfoListResponse) iqResponse.getQueryResponse().getGetAccountMemberInfoListResponse();
+
+		} catch (JAXBException e) {
+			e.printStackTrace();
+			throw new ConnectionFailedException("Cannot get group members");
+		}
+	}
+
 	public void deleteAccount(Uid uid) {
 		AccountList accountList = new AccountList();
 		accountList.addAccounts(uid.getUidValue());
@@ -309,10 +334,6 @@ public class Connection {
 		marshaller.marshal(request, stream);
 		return stream.toString();
 	}
-//
-//	private Object getUnwrappedObject(IqResponse iqResponse) {
-//		return iqResponse.getQueryResponse().getResult();
-//	}
 
 	private Object getObject(String xml, Object response) throws JAXBException {
 		InputStream inputStream = new ByteArrayInputStream(xml.getBytes());
@@ -321,14 +342,6 @@ public class Connection {
 		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 		return unmarshaller.unmarshal(inputStream);
 	}
-
-//	private IqResponse getResponseObjectBody(Object result) {
-//		QueryResponseAccountInfoList queryResponse = new QueryResponseAccountInfoList();
-//		queryResponse.setResult(result);
-//		IqResponse iqResponse = new IqResponse();
-//		iqResponse.setQueryResponse(queryResponse);
-//		return iqResponse;
-//	}
 
 	private HttpResponse<String> post(String url, String body) {
 		try {
