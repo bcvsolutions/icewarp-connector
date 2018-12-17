@@ -26,11 +26,23 @@ import javax.xml.bind.annotation.XmlRootElement;
 </members>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "AddAccountMembers")
+@XmlRootElement
 public class Members {
 	@XmlElement
 	private final String classname = "TPropertyMembers";
 	@XmlElementWrapper(name = "val")
 	@XmlElement(name = "item")
 	private List<MemberItem> items;
+
+	public String getClassname() {
+		return classname;
+	}
+
+	public List<MemberItem> getItems() {
+		return items;
+	}
+
+	public void setItems(List<MemberItem> items) {
+		this.items = items;
+	}
 }

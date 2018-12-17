@@ -7,12 +7,15 @@ import eu.bcvsolutions.idm.connector.IceWarpConfiguration;
 import eu.bcvsolutions.idm.connector.IceWarpConnector;
 import eu.bcvsolutions.idm.connector.entity.Account;
 import eu.bcvsolutions.idm.connector.entity.AccountList;
+import eu.bcvsolutions.idm.connector.entity.AddAccountMembers;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
 import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoList;
 import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoListResponse;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
 import eu.bcvsolutions.idm.connector.entity.Item;
+import eu.bcvsolutions.idm.connector.entity.MemberItem;
+import eu.bcvsolutions.idm.connector.entity.Members;
 import eu.bcvsolutions.idm.connector.entity.PropertyName;
 import eu.bcvsolutions.idm.connector.entity.PropertyState;
 import eu.bcvsolutions.idm.connector.entity.PropertyVal;
@@ -25,6 +28,7 @@ import eu.bcvsolutions.idm.connector.wrapper.Query;
 import eu.bcvsolutions.idm.connector.entity.Authenticate;
 import eu.bcvsolutions.idm.connector.entity.Filter;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoList;
+import eu.bcvsolutions.idm.connector.wrapper.QueryResponse;
 import eu.bcvsolutions.idm.connector.wrapper.QueryResponseAccountInfoList;
 
 import eu.bcvsolutions.idm.connector.wrapper.QueryResponseMemberInfoList;
@@ -124,12 +128,20 @@ public class Connection {
 			}
 			log.info(response.getBody());
 
-			IqResponse iqResponse = (IqResponse) getObject(response.getBody(), new IqResponse());
-			this.sid = iqResponse.getSid();
+			QueryResponse queryResponse = new QueryResponse();
+			IqResponse iqResponse = new IqResponse();
+			iqResponse.setQueryResponse(queryResponse);
+			iqResponse = (IqResponse) getObject(response.getBody(), new IqResponse());
 
-//			AuthenticateResponse authenticateResponse = (AuthenticateResponse)iqResponse.getQueryResponse().getResult();
+			if (iqResponse.getQueryResponse().getResult().equals("0")) {
+				throw new ConnectionFailedException("Authenticate failed");
+			} else {
+				this.sid = iqResponse.getSid();
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
+			throw new ConnectionFailedException("Authenticate failed");
 		}
 	}
 
@@ -305,6 +317,36 @@ public class Connection {
 		} catch (JAXBException e) {
 			e.printStackTrace();
 			throw new ConnectionFailedException("Cannot get group members");
+		}
+	}
+
+	public void addMemberToGroup(String userUid, String groupUid) {
+		MemberItem member = new MemberItem();
+		member.setUserUid(userUid);
+		Members members = new Members();
+		members.setItems(Collections.singletonList(member));
+		AddAccountMembers addAccountMembers = new AddAccountMembers();
+		addAccountMembers.setGroupEmail(groupUid);
+		addAccountMembers.setMembers(members);
+
+		IqResponse iqResponse = new IqResponse();
+
+		try {
+			log.info(getWrappedXml(addAccountMembers));
+
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(addAccountMembers));
+			if (response.getStatus() != 200) {
+				throw new ConnectionFailedException("Can't connect to system, return code " + response.getStatus());
+			}
+			log.info(response.getBody());
+			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
+
+			if (iqResponse.getQueryResponse().getResult().equals("0")) {
+				throw new ConnectionFailedException("Cannot add member to group");
+			}
+		} catch (JAXBException e) {
+			e.printStackTrace();
+			throw new ConnectionFailedException("Cannot add member to group");
 		}
 	}
 

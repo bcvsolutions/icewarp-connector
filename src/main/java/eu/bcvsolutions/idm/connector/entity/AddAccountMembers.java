@@ -33,10 +33,26 @@ import javax.xml.bind.annotation.XmlRootElement;
 </iq>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "AddAccountMembers")
+@XmlRootElement
 public class AddAccountMembers {
-	@XmlElement
-	private String accountemail;
+	@XmlElement(name = "accountemail")
+	private String groupEmail;
 	@XmlElement
 	private Members members;
+
+	public String getGroupEmail() {
+		return groupEmail;
+	}
+
+	public void setGroupEmail(String groupEmail) {
+		this.groupEmail = groupEmail;
+	}
+
+	public Members getMembers() {
+		return members;
+	}
+
+	public void setMembers(Members members) {
+		this.members = members;
+	}
 }

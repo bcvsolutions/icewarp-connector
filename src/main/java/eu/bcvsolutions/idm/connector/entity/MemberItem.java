@@ -22,9 +22,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "AddAccountMembers")
 public class MemberItem {
 	@XmlElement
-	private String classname;
-	@XmlElement
-	private String val;
+	private final String classname = "tpropertymember";
+	@XmlElement(name = "val")
+	private String userUid;
 	@XmlElement(name = "default")
 	private String def;
 	@XmlElement
@@ -40,16 +40,12 @@ public class MemberItem {
 		return classname;
 	}
 
-	public void setClassname(String classname) {
-		this.classname = classname;
+	public String getUserUid() {
+		return userUid;
 	}
 
-	public String getVal() {
-		return val;
-	}
-
-	public void setVal(String val) {
-		this.val = val;
+	public void setUserUid(String userUid) {
+		this.userUid = userUid;
 	}
 
 	public String getDef() {
