@@ -13,7 +13,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class GetAccountMemberInfoList {
 	// alias or email of group
-	@XmlElement(name = "groupUid")
+	@XmlElement(name = "who")
 	private String groupUid;
 
 	public String getGroupUid() {

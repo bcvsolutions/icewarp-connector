@@ -24,4 +24,12 @@ public class Filter {
 	public void setTypemask(String typemask) {
 		this.typemask = typemask;
 	}
+
+	public String getNamemaskAttribute() {
+		return namemask;
+	}
+
+	public String getTypemaskAttribute() {
+		return typemask;
+	}
 }

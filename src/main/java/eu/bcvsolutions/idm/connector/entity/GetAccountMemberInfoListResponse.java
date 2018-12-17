@@ -24,7 +24,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "result")
 public class GetAccountMemberInfoListResponse {
-	@XmlElement
+	@XmlElement(name = "item")
 	private List<MemberResponse> items;
 
 	public GetAccountMemberInfoListResponse() {

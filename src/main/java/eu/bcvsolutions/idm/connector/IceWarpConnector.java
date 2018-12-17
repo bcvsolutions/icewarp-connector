@@ -1,18 +1,11 @@
 package eu.bcvsolutions.idm.connector;
 
-import eu.bcvsolutions.idm.connector.communication.Connection;
-import eu.bcvsolutions.idm.connector.entity.AccountResponse;
-import eu.bcvsolutions.idm.connector.entity.Filter;
-import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoListResponse;
-import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.api.operations.ResolveUsernameApiOp;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
@@ -23,8 +16,6 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
-import org.identityconnectors.framework.common.objects.SyncResultsHandler;
-import org.identityconnectors.framework.common.objects.SyncToken;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
@@ -32,15 +23,17 @@ import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.framework.spi.ConnectorClass;
-import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
-import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
-import org.identityconnectors.framework.spi.operations.SyncOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
-import org.identityconnectors.framework.spi.operations.UpdateAttributeValuesOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
+
+import eu.bcvsolutions.idm.connector.communication.Connection;
+import eu.bcvsolutions.idm.connector.entity.AccountResponse;
+import eu.bcvsolutions.idm.connector.entity.Filter;
+import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoListResponse;
+import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
 
 /**
  * This sample connector provides (empty) implementations for all ConnId operations, but this is not mandatory: any
@@ -65,6 +58,7 @@ public class IceWarpConnector implements Connector,
 	public static final String FULL_NAME = "name";
 	public static final String PASSWORD = "__PASSWORD__";
 	public static final String ACCOUNT_TYPE = "accountType";
+	public static final String GROUPS = "groups";
 
 	public static final String ROLE_TYPE = "7";
 	public static final String USER_TYPE = "0";
@@ -90,7 +84,9 @@ public class IceWarpConnector implements Connector,
     @Override
     public void dispose() {
         // dispose of any resources the this connector uses.
-		connection.logout();
+		if (connection != null) {
+			connection.logout();
+		}
     }
 
     @Override
@@ -109,9 +105,8 @@ public class IceWarpConnector implements Connector,
             final Set<Attribute> replaceAttributes,
             final OperationOptions options) {
 
-		connection.setAccountProperties(uid, replaceAttributes);
-
-        return uid;
+		List<String> oldGroups = handleMembers(uid.getUidValue());
+		return new Uid(connection.setAccountProperties(uid, replaceAttributes, oldGroups));
     }
 
     @Override
@@ -126,6 +121,8 @@ public class IceWarpConnector implements Connector,
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ADMIN_TYPE, Boolean.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(FULL_NAME, String.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(PASSWORD, GuardedString.class));
+		accountObjectClassBuilder.addAttributeInfo(
+				AttributeInfoBuilder.define(GROUPS).setMultiValued(true).setType(String.class).build());
 
 		ObjectClassInfoBuilder groupObjectClassBuilder = new ObjectClassInfoBuilder();
 		groupObjectClassBuilder.setType(ObjectClass.GROUP_NAME);
@@ -195,7 +192,8 @@ public class IceWarpConnector implements Connector,
 			} else if (configuration.getObject().equals(ObjectClass.GROUP_NAME)) {
 				Filter filter = new Filter();
 				filter.setTypemask(ROLE_TYPE);
-				filter.setNamemask(query);
+				// For one group te identifier is only the part before @
+				filter.setNamemask(query.split("@")[0]);
 				handleAccount(objectClass, handler, filter);
 			}
 		} else {
@@ -219,39 +217,50 @@ public class IceWarpConnector implements Connector,
 		GetAccountsInfoListResponse accountsInfoList = connection.getAccountsInfoList(filter);
 		if (accountsInfoList != null) {
 			for (AccountResponse account : accountsInfoList.getAccounts()) {
-				ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-				builder.setUid(account.getEmail());
-				builder.setName(account.getEmail());
-				builder.setObjectClass(objectClass);
-				builder.addAttribute(AttributeBuilder.build(FULL_NAME, account.getName()));
-				builder.addAttribute(AttributeBuilder.build(ADMIN_TYPE, getAdminType(account.getAdmintype())));
-				builder.addAttribute(AttributeBuilder.build(ACCOUNT_STATE, account.getAccountstate().getState()));
-				if (objectClass.getObjectClassValue().equals(configuration.getObject()) &&
-						objectClass.getObjectClassValue().equals(ObjectClass.GROUP_NAME)) {
-					builder.addAttribute(AttributeBuilder.build(GROUP_MEMBERS, handleMembers()));
-				}
+				if (account.getEmail().equals(filter.getNamemaskAttribute())) {
+					ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+					builder.setUid(account.getEmail());
+					builder.setName(account.getEmail());
+					builder.setObjectClass(objectClass);
+					builder.addAttribute(AttributeBuilder.build(FULL_NAME, account.getName()));
+					builder.addAttribute(AttributeBuilder.build(ADMIN_TYPE, getAdminType(account.getAdmintype())));
+					builder.addAttribute(AttributeBuilder.build(ACCOUNT_STATE, account.getAccountstate().getState()));
+					if (account.getAccounttype().equals(ROLE_TYPE)) {
+						builder.addAttribute(AttributeBuilder.build(GROUP_MEMBERS, handleMembers(null)));
+					}
+					if (account.getAccounttype().equals(USER_TYPE)) {
+						builder.addAttribute(AttributeBuilder.build(GROUPS, handleMembers(account.getEmail())));
+					}
 
-				handler.handle(builder.build());
+					handler.handle(builder.build());
+				}
 			}
 		}
 	}
 
 	private Boolean getAdminType(String admintype) {
-		if (admintype.equals("0")) {
-			return false;
-		}
-		return true;
-    }
+		return !admintype.equals("0");
+	}
 
-	private List<String> handleMembers() {
+	private List<String> handleMembers(String user) {
 		List<String> members = new ArrayList<>();
 		Filter filter = new Filter();
 		filter.setTypemask(ROLE_TYPE);
 		GetAccountsInfoListResponse groups = connection.getAccountsInfoList(filter);
 		groups.getAccounts().forEach(accountResponse -> {
-			String groupName = accountResponse.getName();
+			String groupName = accountResponse.getEmail();
 			GetAccountMemberInfoListResponse groupMembers = connection.getGroupMembers(groupName);
-			groupMembers.getItems().forEach(memberResponse -> members.add(memberResponse.getUserUid()));
+			// In the email there is ";0" in testing env for some reason
+			groupMembers.getItems().forEach(memberResponse -> {
+				String member = memberResponse.getUserUid();
+				if (user != null) {
+					if (user.equals(member)) {
+						members.add(groupName);
+					}
+				} else {
+					members.add(member);
+				}
+			});
 		});
 		return members;
 	}
