@@ -127,9 +127,7 @@ public class Connection {
 		}
 	}
 
-	public GetAccountsInfoListResponse getAccountsInfoList() {
-		Filter filter = new Filter();
-		filter.setTypemask("0");
+	public GetAccountsInfoListResponse getAccountsInfoList(Filter filter) {
 		GetAccountsInfoList getAccountsInfoList = new GetAccountsInfoList();
 		getAccountsInfoList.setDomainstr(configuration.getDomain());
 		getAccountsInfoList.setCount("5");
