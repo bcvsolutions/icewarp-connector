@@ -2,19 +2,12 @@ package eu.bcvsolutions.idm.connector;
 
 import eu.bcvsolutions.idm.connector.communication.Connection;
 import eu.bcvsolutions.idm.connector.entity.AccountResponse;
-import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.Filter;
-import eu.bcvsolutions.idm.connector.entity.GetAccountProperties;
-import eu.bcvsolutions.idm.connector.entity.GetAccountPropertiesResponse;
 import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
-import eu.bcvsolutions.idm.connector.entity.Item;
-import eu.bcvsolutions.idm.connector.entity.PropertyVal;
-import eu.bcvsolutions.idm.connector.wrapper.IqResponse;
-import java.util.Arrays;
-import java.util.List;
+
 import java.util.Set;
 import java.util.UUID;
-import javax.xml.bind.JAXBException;
+
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.operations.ResolveUsernameApiOp;
@@ -68,8 +61,12 @@ public class IceWarpConnector implements Connector,
 	public static final String DISPLAY_EMAIL = "displayEmail";
 	public static final String ACCOUNT_STATE = "accountState";
 	public static final String ADMIN_TYPE = "adminType";
+	public static final String FULL_NAME = "name";
 	public static final String PASSWORD = "__PASSWORD__";
 	public static final String ACCOUNT_TYPE = "accountType";
+
+	public static final String ROLE_TYPE = "7";
+	public static final String USER_TYPE = "0";
 
 	public static final String GROUP_NAME = "groupName";
 	public static final String GROUP_ALIAS = "groupAlias";
@@ -187,8 +184,9 @@ public class IceWarpConnector implements Connector,
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(LAST_NAME, String.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(EMAIL, String.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(DISPLAY_EMAIL, String.class));
-		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_STATE, Boolean.class));
-		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ADMIN_TYPE, String.class));
+		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_STATE, String.class));
+		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ADMIN_TYPE, Boolean.class));
+		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(FULL_NAME, String.class));
 		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(PASSWORD, GuardedString.class));
 
 		ObjectClassInfoBuilder groupObjectClassBuilder = new ObjectClassInfoBuilder();
@@ -196,9 +194,10 @@ public class IceWarpConnector implements Connector,
 		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(GROUP_NAME, String.class));
 		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(EMAIL, String.class));
 		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(DISPLAY_EMAIL, String.class));
-		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_STATE, Boolean.class));
-		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ADMIN_TYPE, String.class));
+		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ACCOUNT_STATE, String.class));
+		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(ADMIN_TYPE, Boolean.class));
 		groupObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(GROUP_ALIAS, String.class));
+		accountObjectClassBuilder.addAttributeInfo(AttributeInfoBuilder.build(FULL_NAME, String.class));
 
 		SchemaBuilder schemaBuilder = new SchemaBuilder(IceWarpConnector.class);
 		schemaBuilder.defineObjectClass(accountObjectClassBuilder.build());
@@ -226,8 +225,6 @@ public class IceWarpConnector implements Connector,
         Connection connection = new Connection(configuration);
 		// otestování autentizace
         connection.authenticate();
-		// test how response looks like
-		GetAccountsInfoListResponse iqResponse = connection.getAccountsInfoList();
 	}
 
     @Override
@@ -263,52 +260,54 @@ public class IceWarpConnector implements Connector,
             final ResultsHandler handler,
             final OperationOptions options) {
 		log.info("--- EXECUTE QUERY ---");
-		// dostanu UID z IDM
-//		log.info(query.getAttr() + " " + query.getValue());
 
 		// find one user/group or get all.
 		if (query != null) {
+			log.info("query: " + query);
 			if (configuration.getObject().equals(ObjectClass.ACCOUNT_NAME)) {
-				//TODO get one user
+				Filter filter = new Filter();
+				filter.setTypemask(USER_TYPE);
+				filter.setNamemask(query);
+				handleAccount(objectClass, handler, filter);
 			} else if (configuration.getObject().equals(ObjectClass.GROUP_NAME)) {
-				//TODO get one group
+				Filter filter = new Filter();
+				filter.setTypemask(ROLE_TYPE);
+				filter.setNamemask(query);
+				handleAccount(objectClass, handler, filter);
 			}
 		} else {
 			if (objectClass.getObjectClassValue().equals(configuration.getObject()) &&
 					objectClass.getObjectClassValue().equals(ObjectClass.ACCOUNT_NAME)) {
 
-				handleUsers(objectClass, handler);
+				Filter filter = new Filter();
+				filter.setTypemask(USER_TYPE);
+				handleAccount(objectClass, handler, filter);
 			} else if (objectClass.getObjectClassValue().equals(configuration.getObject()) &&
 					objectClass.getObjectClassValue().equals(ObjectClass.GROUP_NAME)) {
 
-				//TODO handle groups
+				Filter filter = new Filter();
+				filter.setTypemask(ROLE_TYPE);
+				handleAccount(objectClass, handler, filter);
 			}
 		}
 
     }
 
-    private void handleUser(ObjectClass objectClass, ResultsHandler handler, String objectId) {
-//		GetAccountsInfoListResponse getAccountsInfoListResponse = connection.getAccountsInfoList();
-		connection.getAccountsInfoList();
-//		if (getAccountsInfoListResponse != null) {
-//			for (AccountResponse account : getAccountsInfoListResponse.getAccounts()) {
-//				log.info("account.getFirstname(): " + account.getFirstname());
-//			}
-//			ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-//			builder.setUid(objectId);
-//			builder.setFirstname(objectId);
-//			builder.setObjectClass(objectClass);
-//			builder.addAttribute(AttributeBuilder.build("firstname", getAccountPropertiesResponse.getItems().get(0).getPropertyval()));
-//			handler.handle(builder.build());
-//		}
-	}
-
-	private void handleUsers(ObjectClass objectClass, ResultsHandler handler) {
-
-	}
-
-	private void handleGroups(ObjectClass objectClass, ResultsHandler handler) {
-
+	private void handleAccount(ObjectClass objectClass, ResultsHandler handler, Filter filter) {
+		GetAccountsInfoListResponse accountsInfoList = connection.getAccountsInfoList(filter);
+		if (accountsInfoList != null) {
+			for (AccountResponse account : accountsInfoList.getAccounts()) {
+				log.info("account.getName(): " + account.getName());
+				ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+				builder.setUid(account.getEmail());
+				builder.setName(account.getEmail());
+				builder.setObjectClass(objectClass);
+				builder.addAttribute(AttributeBuilder.build(FULL_NAME, account.getName()));
+				builder.addAttribute(AttributeBuilder.build(ADMIN_TYPE, account.getAdmintype()));
+				builder.addAttribute(AttributeBuilder.build(ACCOUNT_STATE, account.getAccountstate().getState()));
+				handler.handle(builder.build());
+			}
+		}
 	}
 
 }
