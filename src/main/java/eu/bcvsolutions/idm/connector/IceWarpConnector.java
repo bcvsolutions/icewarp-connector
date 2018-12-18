@@ -217,52 +217,66 @@ public class IceWarpConnector implements Connector,
 		GetAccountsInfoListResponse accountsInfoList = connection.getAccountsInfoList(filter);
 		if (accountsInfoList != null) {
 			for (AccountResponse account : accountsInfoList.getAccounts()) {
-				if (account.getEmail().equals(filter.getNamemaskAttribute())) {
-					ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-					builder.setUid(account.getEmail());
-					builder.setName(account.getEmail());
-					builder.setObjectClass(objectClass);
-					builder.addAttribute(AttributeBuilder.build(FULL_NAME, account.getName()));
-					builder.addAttribute(AttributeBuilder.build(ADMIN_TYPE, getAdminType(account.getAdmintype())));
-					builder.addAttribute(AttributeBuilder.build(ACCOUNT_STATE, account.getAccountstate().getState()));
-					if (account.getAccounttype().equals(ROLE_TYPE)) {
-						builder.addAttribute(AttributeBuilder.build(GROUP_MEMBERS, handleMembers(null)));
+				if (filter.getNamemaskAttribute() != null && filter.getTypemaskAttribute().equals(ROLE_TYPE)) {
+					if (account.getEmail().equals(filter.getNamemaskAttribute() + "@" + configuration.getDomain())) {
+						prepareConnObject(objectClass, handler, account);
 					}
-					if (account.getAccounttype().equals(USER_TYPE)) {
-						builder.addAttribute(AttributeBuilder.build(GROUPS, handleMembers(account.getEmail())));
-					}
-
-					handler.handle(builder.build());
+				} else {
+					prepareConnObject(objectClass, handler, account);
 				}
 			}
 		}
+	}
+
+	private void prepareConnObject(ObjectClass objectClass, ResultsHandler handler, AccountResponse account) {
+		ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+		builder.setUid(account.getEmail());
+		builder.setName(account.getEmail());
+		builder.setObjectClass(objectClass);
+		builder.addAttribute(AttributeBuilder.build(FULL_NAME, account.getName()));
+		builder.addAttribute(AttributeBuilder.build(ADMIN_TYPE, getAdminType(account.getAdmintype())));
+		builder.addAttribute(AttributeBuilder.build(ACCOUNT_STATE, account.getAccountstate().getState()));
+		if (account.getAccounttype().equals(ROLE_TYPE)) {
+			List<String> members = new ArrayList<>();
+			searchMembers(null, false, members, account.getEmail());
+			builder.addAttribute(AttributeBuilder.build(GROUP_MEMBERS, members));
+		}
+		if (account.getAccounttype().equals(USER_TYPE)) {
+			builder.addAttribute(AttributeBuilder.build(GROUPS, handleMembers(account.getEmail())));
+		}
+
+		handler.handle(builder.build());
 	}
 
 	private Boolean getAdminType(String admintype) {
 		return !admintype.equals("0");
 	}
 
-	private List<String> handleMembers(String user) {
+	private List<String> handleMembers(String account) {
 		List<String> members = new ArrayList<>();
 		Filter filter = new Filter();
 		filter.setTypemask(ROLE_TYPE);
 		GetAccountsInfoListResponse groups = connection.getAccountsInfoList(filter);
 		groups.getAccounts().forEach(accountResponse -> {
 			String groupName = accountResponse.getEmail();
-			GetAccountMemberInfoListResponse groupMembers = connection.getGroupMembers(groupName);
-			// In the email there is ";0" in testing env for some reason
-			groupMembers.getItems().forEach(memberResponse -> {
-				String member = memberResponse.getUserUid();
-				if (user != null) {
-					if (user.equals(member)) {
-						members.add(groupName);
-					}
-				} else {
-					members.add(member);
-				}
-			});
+			searchMembers(account, true, members, groupName);
 		});
 		return members;
+	}
+
+	private void searchMembers(String user, Boolean forUser, List<String> members, String groupName) {
+		GetAccountMemberInfoListResponse groupMembers = connection.getGroupMembers(groupName);
+		// In the email there is ";0" in testing env for some reason
+		groupMembers.getItems().forEach(memberResponse -> {
+			String member = memberResponse.getUserUid();
+			if (user != null && forUser) {
+				if (user.equals(member)) {
+					members.add(groupName);
+				}
+			} else {
+				members.add(member);
+			}
+		});
 	}
 
 }
