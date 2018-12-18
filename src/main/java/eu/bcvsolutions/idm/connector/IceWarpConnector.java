@@ -217,8 +217,10 @@ public class IceWarpConnector implements Connector,
 		GetAccountsInfoListResponse accountsInfoList = connection.getAccountsInfoList(filter);
 		if (accountsInfoList != null) {
 			for (AccountResponse account : accountsInfoList.getAccounts()) {
-				if (filter.getNamemaskAttribute() != null && filter.getTypemaskAttribute().equals(ROLE_TYPE)) {
-					if (account.getEmail().equals(filter.getNamemaskAttribute() + "@" + configuration.getDomain())) {
+				if (filter.getNamemaskAttribute() != null) {
+					if (filter.getTypemaskAttribute().equals(ROLE_TYPE) && account.getEmail().equals(filter.getNamemaskAttribute() + "@" + configuration.getDomain())) {
+						prepareConnObject(objectClass, handler, account);
+					} else if(filter.getTypemaskAttribute().equals(USER_TYPE) && account.getEmail().equals(filter.getNamemaskAttribute())) {
 						prepareConnObject(objectClass, handler, account);
 					}
 				} else {
