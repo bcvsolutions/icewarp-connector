@@ -67,6 +67,8 @@ public class IceWarpConnector implements Connector,
 	public static final String GROUP_ALIAS = "groupAlias";
 	public static final String GROUP_MEMBERS = "members";
 
+	public static final int MAX_ROWS = 100;
+
     @Override
     public IceWarpConfiguration getConfiguration() {
         return configuration;
@@ -214,7 +216,20 @@ public class IceWarpConnector implements Connector,
     }
 
 	private void handleAccount(ObjectClass objectClass, ResultsHandler handler, Filter filter) {
-		GetAccountsInfoListResponse accountsInfoList = connection.getAccountsInfoList(filter);
+		GetAccountsInfoListResponse accountsInfoList = connection.getAccountsInfoList(filter, 0);
+		getOnePageOfAccounts(objectClass, handler, filter, accountsInfoList);
+
+		if (Integer.valueOf(accountsInfoList.getOverallcount()) > MAX_ROWS) {
+			int numOfPages = Integer.valueOf(accountsInfoList.getOverallcount()) / MAX_ROWS;
+			for (int i = 1; i <= numOfPages; i++) {
+				accountsInfoList = connection.getAccountsInfoList(filter, (MAX_ROWS * i));
+				getOnePageOfAccounts(objectClass, handler, filter, accountsInfoList);
+			}
+		}
+
+	}
+
+	private void getOnePageOfAccounts(ObjectClass objectClass, ResultsHandler handler, Filter filter, GetAccountsInfoListResponse accountsInfoList) {
 		if (accountsInfoList != null) {
 			for (AccountResponse account : accountsInfoList.getAccounts()) {
 				if (filter.getNamemaskAttribute() != null) {
@@ -258,16 +273,41 @@ public class IceWarpConnector implements Connector,
 		List<String> members = new ArrayList<>();
 		Filter filter = new Filter();
 		filter.setTypemask(ROLE_TYPE);
-		GetAccountsInfoListResponse groups = connection.getAccountsInfoList(filter);
+		GetAccountsInfoListResponse groups = connection.getAccountsInfoList(filter, 0);
+
 		groups.getAccounts().forEach(accountResponse -> {
 			String groupName = accountResponse.getEmail();
 			searchMembers(account, true, members, groupName);
 		});
+
+		if (Integer.valueOf(groups.getOverallcount()) > MAX_ROWS) {
+			int numOfPages = Integer.valueOf(groups.getOverallcount()) / MAX_ROWS;
+			for (int i = 1; i <= numOfPages; i++) {
+				groups = connection.getAccountsInfoList(filter, (MAX_ROWS * i));
+				groups.getAccounts().forEach(accountResponse -> {
+					String groupName = accountResponse.getEmail();
+					searchMembers(account, true, members, groupName);
+				});
+			}
+		}
 		return members;
 	}
 
 	private void searchMembers(String user, Boolean forUser, List<String> members, String groupName) {
-		GetAccountMemberInfoListResponse groupMembers = connection.getGroupMembers(groupName);
+		GetAccountMemberInfoListResponse groupMembers = connection.getGroupMembers(groupName, 0);
+		getOnePageOfMembers(user, forUser, members, groupName, groupMembers);
+
+		if (Integer.valueOf(groupMembers.getOverallcount()) > MAX_ROWS) {
+			int numOfPages = Integer.valueOf(groupMembers.getOverallcount()) / MAX_ROWS;
+			for (int i = 1; i <= numOfPages; i++) {
+				groupMembers = connection.getGroupMembers(groupName, (MAX_ROWS * i));
+				getOnePageOfMembers(user, forUser, members, groupName, groupMembers);
+			}
+		}
+
+	}
+
+	private void getOnePageOfMembers(String user, Boolean forUser, List<String> members, String groupName, GetAccountMemberInfoListResponse groupMembers) {
 		// In the email there is ";0" in testing env for some reason
 		groupMembers.getItems().forEach(memberResponse -> {
 			String member = memberResponse.getUserUid();

@@ -15,6 +15,10 @@ public class GetAccountMemberInfoList {
 	// alias or email of group
 	@XmlElement(name = "who")
 	private String groupUid;
+	@XmlElement
+	protected String offset;
+	@XmlElement
+	protected String count;
 
 	public String getGroupUid() {
 		return groupUid;
@@ -22,5 +26,21 @@ public class GetAccountMemberInfoList {
 
 	public void setGroupUid(String groupUid) {
 		this.groupUid = groupUid;
+	}
+
+	public String getOffset() {
+		return offset;
+	}
+
+	public void setOffset(String offset) {
+		this.offset = offset;
+	}
+
+	public String getCount() {
+		return count;
+	}
+
+	public void setCount(String count) {
+		this.count = count;
 	}
 }

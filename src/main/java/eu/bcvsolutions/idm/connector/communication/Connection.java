@@ -126,10 +126,12 @@ public class Connection {
 		}
 	}
 
-	public GetAccountsInfoListResponse getAccountsInfoList(Filter filter) {
+	public GetAccountsInfoListResponse getAccountsInfoList(Filter filter, int offset) {
 		GetAccountsInfoList getAccountsInfoList = new GetAccountsInfoList();
 		getAccountsInfoList.setDomainstr(configuration.getDomain());
 		getAccountsInfoList.setFilter(filter);
+		getAccountsInfoList.setCount(String.valueOf(IceWarpConnector.MAX_ROWS));
+		getAccountsInfoList.setOffset(String.valueOf(offset));
 
 		GetAccountsInfoListResponse getAccountsInfoListResponse = new GetAccountsInfoListResponse();
 		QueryResponseAccountInfoList queryResponse = new QueryResponseAccountInfoList();
@@ -327,9 +329,11 @@ public class Connection {
 		}
 	}
 
-	public GetAccountMemberInfoListResponse getGroupMembers(String uid) {
+	public GetAccountMemberInfoListResponse getGroupMembers(String uid, int offset) {
 		GetAccountMemberInfoList getAccountMemberInfoList = new GetAccountMemberInfoList();
 		getAccountMemberInfoList.setGroupUid(uid);
+		getAccountMemberInfoList.setCount(String.valueOf(IceWarpConnector.MAX_ROWS));
+		getAccountMemberInfoList.setOffset(String.valueOf(offset));
 
 		GetAccountMemberInfoListResponse getAccountMemberInfoListResponse = new GetAccountMemberInfoListResponse();
 		QueryResponseMemberInfoList queryResponse = new QueryResponseMemberInfoList();

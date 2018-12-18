@@ -26,6 +26,10 @@ import javax.xml.bind.annotation.XmlType;
 public class GetAccountMemberInfoListResponse {
 	@XmlElement(name = "item")
 	private List<MemberResponse> items;
+	@XmlElement
+	private String offset;
+	@XmlElement
+	private String overallcount;
 
 	public GetAccountMemberInfoListResponse() {
 		if (items == null) {
@@ -39,5 +43,21 @@ public class GetAccountMemberInfoListResponse {
 
 	public void setItems(List<MemberResponse> items) {
 		this.items = items;
+	}
+
+	public String getOffset() {
+		return offset;
+	}
+
+	public void setOffset(String offset) {
+		this.offset = offset;
+	}
+
+	public String getOverallcount() {
+		return overallcount;
+	}
+
+	public void setOverallcount(String overallcount) {
+		this.overallcount = overallcount;
 	}
 }

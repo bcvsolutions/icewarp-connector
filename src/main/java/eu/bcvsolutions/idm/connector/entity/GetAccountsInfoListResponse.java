@@ -43,6 +43,10 @@ import javax.xml.bind.annotation.XmlType;
 public class GetAccountsInfoListResponse {
 	@XmlElement(name = "item")
 	private List<AccountResponse> accounts;
+	@XmlElement
+	private String offset;
+	@XmlElement
+	private String overallcount;
 
 	public List<AccountResponse> getAccounts() {
 		if (accounts == null) {
@@ -53,5 +57,21 @@ public class GetAccountsInfoListResponse {
 
 	public void setAccounts(List<AccountResponse> accounts) {
 		this.accounts = accounts;
+	}
+
+	public String getOffset() {
+		return offset;
+	}
+
+	public void setOffset(String offset) {
+		this.offset = offset;
+	}
+
+	public String getOverallcount() {
+		return overallcount;
+	}
+
+	public void setOverallcount(String overallcount) {
+		this.overallcount = overallcount;
 	}
 }
