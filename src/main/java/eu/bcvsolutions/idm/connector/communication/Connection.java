@@ -444,6 +444,10 @@ public class Connection {
 		Iq iq = new Iq();
 		iq.setSid(this.sid);
 		iq.setQuery(query);
+		// log xml body for debug purposes
+		if (configuration.getDebug()) {
+			log.info(getXMLBody(iq));
+		}
 		return getXMLBody(iq);
 	}
 

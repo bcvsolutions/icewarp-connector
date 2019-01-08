@@ -105,6 +105,21 @@
     
   <build>
     <plugins>
+    <!-- For development -->
+      <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-jar-plugin</artifactId>
+		<configuration>
+			<archive>
+				<addMavenDescriptor>false</addMavenDescriptor>
+				<manifestEntries>
+					<ConnectorBundle-FrameworkVersion>${connid.version}</ConnectorBundle-FrameworkVersion>
+					<ConnectorBundle-Name>${project.artifactId}</ConnectorBundle-Name>
+					<ConnectorBundle-Version>${project.version}</ConnectorBundle-Version>
+				</manifestEntries>
+			</archive>
+		</configuration>
+	  </plugin>
       <!-- Disable any licese check -->  
       <plugin>        
         <groupId>com.mycila.maven-license-plugin</groupId>

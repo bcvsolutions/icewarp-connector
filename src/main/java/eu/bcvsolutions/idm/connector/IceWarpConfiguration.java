@@ -12,8 +12,9 @@ public class IceWarpConfiguration extends AbstractConfiguration {
     private String username;
     private GuardedString password;
     private String domain;
-	// user / group
+    // user / group
     private String object;
+    private Boolean debug;
 
     @ConfigurationProperty(displayMessageKey = "host.display",
             helpMessageKey = "host.help", order = 1,
@@ -63,6 +64,16 @@ public class IceWarpConfiguration extends AbstractConfiguration {
     }
     public void setObject(String object) {
         this.object = object;
+    }
+
+    @ConfigurationProperty(displayMessageKey = "debug.display",
+            helpMessageKey = "debug.help", order = 6,
+            required = true, confidential = false)
+    public Boolean getDebug() {
+        return debug;
+    }
+    public void setDebug(Boolean debug) {
+        this.debug = debug;
     }
 
     @Override

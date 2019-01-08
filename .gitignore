@@ -26,3 +26,9 @@ hs_err_pid*
 icewarp-connector.iml
 .idea
 target/*
+/target/
+
+# Eclipse Files
+.classpath
+.project
+.settings
