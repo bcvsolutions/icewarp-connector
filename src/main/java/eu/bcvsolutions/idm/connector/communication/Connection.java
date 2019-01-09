@@ -444,11 +444,13 @@ public class Connection {
 		Iq iq = new Iq();
 		iq.setSid(this.sid);
 		iq.setQuery(query);
+		String xmlBody = getXMLBody(iq);
 		// log xml body for debug purposes
 		if (configuration.getDebug()) {
-			log.info(getXMLBody(iq));
+			log.info("ICEWARP REQUEST XML BODY");
+			log.info(xmlBody);
 		}
-		return getXMLBody(iq);
+		return xmlBody;
 	}
 
 	// TODO try to make all entities to inherit some class and use it here instead of Object?
