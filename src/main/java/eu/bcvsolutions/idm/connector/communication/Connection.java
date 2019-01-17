@@ -31,10 +31,12 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import eu.bcvsolutions.idm.connector.IceWarpConfiguration;
 import eu.bcvsolutions.idm.connector.IceWarpConnector;
 import eu.bcvsolutions.idm.connector.entity.Account;
+import eu.bcvsolutions.idm.connector.entity.AccountList;
 import eu.bcvsolutions.idm.connector.entity.AddAccountMembers;
 import eu.bcvsolutions.idm.connector.entity.Authenticate;
 import eu.bcvsolutions.idm.connector.entity.CreateAccount;
 import eu.bcvsolutions.idm.connector.entity.DeleteAccountMembers;
+import eu.bcvsolutions.idm.connector.entity.DeleteAccounts;
 import eu.bcvsolutions.idm.connector.entity.Filter;
 import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoList;
 import eu.bcvsolutions.idm.connector.entity.GetAccountMemberInfoListResponse;
@@ -224,7 +226,6 @@ public class Connection {
 		IqResponse iqResponse = new IqResponse();
 		iqResponse.setQueryResponse(queryResponse);
 
-
 		try {
 			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
 			if (response.getStatus() != 200) {
@@ -244,6 +245,35 @@ public class Connection {
 		} catch (JAXBException e) {
 			e.printStackTrace();
 			throw new ConnectorException("Cannot create");
+		}
+	}
+	
+	public void deleteAccount(String account) {
+		AccountList accountList = new AccountList();
+		accountList.addAccounts(account);
+		
+		DeleteAccounts deleteAccounts = new DeleteAccounts();
+		deleteAccounts.setDomainstr(configuration.getDomain());
+		deleteAccounts.setAccountList(accountList);
+		deleteAccounts.setLeavedata("0");
+		
+		QueryResponse queryResponse = new QueryResponse();
+		IqResponse iqResponse = new IqResponse();
+		iqResponse.setQueryResponse(queryResponse);
+
+		try {
+			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(deleteAccounts));
+			if (response.getStatus() != 200) {
+				throw new ConnectorException("Can't connect to system, return code " + response.getStatus());
+			}
+			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
+
+			if (iqResponse.getQueryResponse().getResult().equals("0")) {
+				throw new ConnectorException("Cannot delete member " + account);
+			}
+		} catch (JAXBException e) {
+			e.printStackTrace();
+			throw new ConnectorException("Cannot delete member " + account);
 		}
 	}
 
@@ -465,6 +495,11 @@ public class Connection {
 	}
 
 	private Object getObject(String xml, Object response) throws JAXBException {
+		// log xml body for debug purposes
+		if (configuration.getDebug()) {
+			log.info("ICEWARP RESPONSE XML BODY");
+			log.info(xml);
+		}
 		InputStream inputStream = new ByteArrayInputStream(xml.getBytes());
 
 		JAXBContext jaxbContext = JAXBContext.newInstance(response.getClass());

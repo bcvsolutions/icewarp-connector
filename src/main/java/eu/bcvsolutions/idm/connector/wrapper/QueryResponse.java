@@ -13,6 +13,8 @@ import javax.xml.bind.annotation.XmlType;
 public class QueryResponse {
 	@XmlElement
 	private String result;
+	@XmlElement
+	private Error error;
 
 	public String getResult() {
 		return result;
@@ -21,4 +23,6 @@ public class QueryResponse {
 	public void setResult(String result) {
 		this.result = result;
 	}
+
+	
 }

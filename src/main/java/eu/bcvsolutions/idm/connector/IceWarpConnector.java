@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
@@ -24,6 +25,7 @@ import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
@@ -41,7 +43,7 @@ import eu.bcvsolutions.idm.connector.entity.GetAccountsInfoListResponse;
  */
 @ConnectorClass(configurationClass = IceWarpConfiguration.class, displayNameKey = "icewarp.connector.display")
 public class IceWarpConnector implements Connector,
-        CreateOp, UpdateOp, SchemaOp, TestOp, SearchOp<String> {
+        CreateOp, UpdateOp, DeleteOp, SchemaOp, TestOp, SearchOp<String> {
 
     private static final Log log = Log.getLog(IceWarpConnector.class);
 
@@ -109,6 +111,14 @@ public class IceWarpConnector implements Connector,
 
 		List<String> oldGroups = handleMembers(uid.getUidValue());
 		return new Uid(connection.setAccountProperties(uid, replaceAttributes, oldGroups));
+    }
+    
+    @Override
+    public void delete(
+            final ObjectClass objectClass,
+            final Uid uid,
+            final OperationOptions options) {
+    	throw new ConnectorException("Delete method is not supported");
     }
 
     @Override
