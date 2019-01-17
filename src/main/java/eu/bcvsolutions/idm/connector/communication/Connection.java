@@ -232,15 +232,18 @@ public class Connection {
 				throw new ConnectorException("Can't connect to system, return code " + response.getStatus());
 			}
 			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
-
-			if (iqResponse.getQueryResponse().getResult().equals("0")) {
-				throw new ConnectorException("Cannot create user " + account.getEmail());
+			
+			if (iqResponse.getType().equals(IceWarpConnector.RESPONSE_TYPE_RESULT)) {
+				if (iqResponse.getQueryResponse().getResult().equals("0")) {
+					throw new ConnectorException("Cannot create user " + account.getEmail());
+				}
+				if (!groups.isEmpty()) {
+					groups.forEach(group -> addMemberToGroup(account.getEmail(), group));
+				}
+				setAccountPassword(account.getEmail(), password);				
+			} else {
+				throw new ConnectorException("Cannot create user " + account.getEmail() + "");
 			}
-			if (!groups.isEmpty()) {
-				groups.forEach(group -> addMemberToGroup(account.getEmail(), group));
-			}
-			setAccountPassword(account.getEmail(), password);
-
 			return account.getEmail();
 		} catch (JAXBException e) {
 			e.printStackTrace();

@@ -68,6 +68,9 @@ public class IceWarpConnector implements Connector,
 	public static final String GROUP_NAME = "groupName";
 	public static final String GROUP_ALIAS = "groupAlias";
 	public static final String GROUP_MEMBERS = "members";
+	
+	public static final String RESPONSE_TYPE_RESULT = "result";
+	public static final String RESPONSE_TYPE_ERROR = "error";
 
 	public static final int MAX_ROWS = 100;
 

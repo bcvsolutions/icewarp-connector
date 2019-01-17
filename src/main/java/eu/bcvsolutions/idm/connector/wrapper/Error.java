@@ -14,13 +14,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Error {
 	@XmlAttribute
-	private String error;
+	private String uid;
 
-	public String getError() {
-		return error;
+	public String getUid() {
+		return uid;
 	}
 
-	public void setError(String error) {
-		this.error = error;
+	public void setUid(String uid) {
+		this.uid = uid;
 	} 
 }
