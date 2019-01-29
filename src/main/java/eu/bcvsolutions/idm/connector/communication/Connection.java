@@ -173,16 +173,20 @@ public class Connection {
 				account.setEmail(String.valueOf(attribute.getValue().get(0)));
 				continue;
 			}
-			if (attribute.getName().equals(IceWarpConnector.FIRST_NAME)) {
-				account.setFirstName(String.valueOf(attribute.getValue().get(0)));
+			if (attribute.getName().equals(IceWarpConnector.FIRST_NAME) && attribute.getValue().get(0) != null) {
+				if (attribute.getValue() != null && attribute.getValue().get(0) != null) {
+					account.setFirstName(String.valueOf(attribute.getValue().get(0)));					
+				}
 				continue;
 			}
 			if (attribute.getName().equals(IceWarpConnector.LAST_NAME)) {
-				account.setLastName(String.valueOf(attribute.getValue().get(0)));
+				if (attribute.getValue() != null && attribute.getValue().get(0) != null) {
+					account.setLastName(String.valueOf(attribute.getValue().get(0)));				
+				}
 				continue;
 			}
 			if (attribute.getName().equals(IceWarpConnector.ACCOUNT_STATE)) {
-				if (attribute.getValue().get(0) != null) {
+				if (attribute.getValue() != null && attribute.getValue().get(0) != null) {
 					account.setAccountstate(String.valueOf(attribute.getValue().get(0)));
 				}
 				continue;
@@ -225,29 +229,38 @@ public class Connection {
 		QueryResponse queryResponse = new QueryResponse();
 		IqResponse iqResponse = new IqResponse();
 		iqResponse.setQueryResponse(queryResponse);
-
-		try {
-			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
-			if (response.getStatus() != 200) {
-				throw new ConnectorException("Can't connect to system, return code " + response.getStatus());
-			}
-			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
-			
-			if (iqResponse.getType().equals(IceWarpConnector.RESPONSE_TYPE_RESULT)) {
-				if (iqResponse.getQueryResponse().getResult().equals("0")) {
-					throw new ConnectorException("Cannot create user " + account.getEmail());
+		
+		int count = 0;
+		int maxTries = 5;
+		while (true) {
+			try {
+				HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
+				if (response.getStatus() != 200) {
+					throw new ConnectorException("Can't connect to system, return code " + response.getStatus());
 				}
-				if (!groups.isEmpty()) {
-					groups.forEach(group -> addMemberToGroup(account.getEmail(), group));
+				iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
+				
+				if (iqResponse.getType().equals(IceWarpConnector.RESPONSE_TYPE_RESULT)) {
+					if (iqResponse.getQueryResponse().getResult().equals("0")) {
+						if (++count == maxTries) {
+							throw new ConnectorException("Cannot create user " + account.getEmail());							
+						}
+					} else if (iqResponse.getQueryResponse().getResult().equals("1") ) {
+						if (!groups.isEmpty()) {
+							groups.forEach(group -> addMemberToGroup(account.getEmail(), group));
+						}
+						setAccountPassword(account.getEmail(), password);
+						return account.getEmail();
+					}
+				} else {
+					if (++count == maxTries) {
+						throw new ConnectorException("Cannot create user " + account.getEmail());					
+					}
 				}
-				setAccountPassword(account.getEmail(), password);				
-			} else {
-				throw new ConnectorException("Cannot create user " + account.getEmail() + "");
+			} catch (JAXBException e) {
+				e.printStackTrace();
+				throw new ConnectorException("Cannot create");
 			}
-			return account.getEmail();
-		} catch (JAXBException e) {
-			e.printStackTrace();
-			throw new ConnectorException("Cannot create");
 		}
 	}
 	
@@ -455,19 +468,31 @@ public class Connection {
 		IqResponse iqResponse = new IqResponse();
 		iqResponse.setQueryResponse(queryResponse);
 
-		try {
-			HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(setAccountPassword));
-			if (response.getStatus() != 200) {
-				throw new ConnectorException("Can't connect to system, return code " + response.getStatus());
-			}
-			iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
-
-			if (iqResponse.getQueryResponse().getResult().equals("0")) {
+		int count = 0;
+		int maxTries = 3;
+		while (true) {
+			try {
+				HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(setAccountPassword));
+				if (response.getStatus() != 200) {
+					throw new ConnectorException("Can't connect to system, return code " + response.getStatus());
+				}
+				iqResponse = (IqResponse) getObject(response.getBody(), iqResponse);
+				
+				if (iqResponse.getType().equals(IceWarpConnector.RESPONSE_TYPE_RESULT)) {
+					if (iqResponse.getQueryResponse().getResult().equals("0")) {
+						throw new ConnectorException("Cannot set password for " + userUid);
+					} else if (iqResponse.getQueryResponse().getResult().equals("1")) {
+						break;
+					}
+				} else {
+					if (++count == maxTries) {
+						throw new ConnectorException("Cannot set password for " + userUid);
+					}
+				}
+			} catch (JAXBException e) {
+				e.printStackTrace();
 				throw new ConnectorException("Cannot set password for " + userUid);
 			}
-		} catch (JAXBException e) {
-			e.printStackTrace();
-			throw new ConnectorException("Cannot set password for " + userUid);
 		}
 	}
 
