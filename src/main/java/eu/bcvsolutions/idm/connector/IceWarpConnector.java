@@ -159,9 +159,10 @@ public class IceWarpConnector implements Connector,
 
     @Override
     public void test() {
+		// test authentication
         Connection connection = new Connection(configuration);
-		// otestování autentizace
         connection.authenticate();
+        connection.logout();
 	}
 
     @Override

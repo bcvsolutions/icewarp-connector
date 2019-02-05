@@ -215,7 +215,6 @@ public class Connection {
 			account.setAccounttype(IceWarpConnector.ROLE_TYPE);
 		}
 
-		// TODO handle if something is missing
 		CreateAccount createAccount = new CreateAccount();
 		createAccount.setDomainStr(configuration.getDomain());
 		Item name = new Item("A_Name", new PropertyName(account.getFirstName(), account.getLastName()));
@@ -232,6 +231,11 @@ public class Connection {
 		
 		int count = 0;
 		int maxTries = 5;
+		try {
+			maxTries = configuration.getMaxTries();
+		} catch(NumberFormatException e) {
+			throw new NumberFormatException("Can't parse max tries config input.");
+		}
 		while (true) {
 			try {
 				HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
@@ -468,9 +472,6 @@ public class Connection {
 		IqResponse iqResponse = new IqResponse();
 		iqResponse.setQueryResponse(queryResponse);
 
-		int count = 0;
-		int maxTries = 3;
-		while (true) {
 			try {
 				HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(setAccountPassword));
 				if (response.getStatus() != 200) {
@@ -481,19 +482,14 @@ public class Connection {
 				if (iqResponse.getType().equals(IceWarpConnector.RESPONSE_TYPE_RESULT)) {
 					if (iqResponse.getQueryResponse().getResult().equals("0")) {
 						throw new ConnectorException("Cannot set password for " + userUid);
-					} else if (iqResponse.getQueryResponse().getResult().equals("1")) {
-						break;
 					}
 				} else {
-					if (++count == maxTries) {
-						throw new ConnectorException("Cannot set password for " + userUid);
-					}
+					throw new ConnectorException("Cannot set password for " + userUid);
 				}
 			} catch (JAXBException e) {
 				e.printStackTrace();
 				throw new ConnectorException("Cannot set password for " + userUid);
 			}
-		}
 	}
 
 	private String getWrappedXml(Object request) throws JAXBException {
