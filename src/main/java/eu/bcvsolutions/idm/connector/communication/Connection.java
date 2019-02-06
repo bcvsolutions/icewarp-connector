@@ -229,15 +229,18 @@ public class Connection {
 		IqResponse iqResponse = new IqResponse();
 		iqResponse.setQueryResponse(queryResponse);
 		
-		int count = 0;
+		int count = 1;
 		int maxTries = 5;
 		try {
 			maxTries = configuration.getMaxTries();
 		} catch(NumberFormatException e) {
-			throw new NumberFormatException("Can't parse max tries config input.");
+			log.error("Can't parse max tries config input.");
 		}
 		while (true) {
 			try {
+				if (configuration.getDebug()) {
+					log.info("REQUEST TRY COUNT: " + count);					
+				}
 				HttpResponse<String> response = post(configuration.getHost() + "/icewarpapi/", getWrappedXml(createAccount));
 				if (response.getStatus() != 200) {
 					throw new ConnectorException("Can't connect to system, return code " + response.getStatus());
@@ -246,7 +249,7 @@ public class Connection {
 				
 				if (iqResponse.getType().equals(IceWarpConnector.RESPONSE_TYPE_RESULT)) {
 					if (iqResponse.getQueryResponse().getResult().equals("0")) {
-						if (++count == maxTries) {
+						if (count++ == maxTries) {
 							throw new ConnectorException("Cannot create user " + account.getEmail());							
 						}
 					} else if (iqResponse.getQueryResponse().getResult().equals("1") ) {
@@ -257,7 +260,7 @@ public class Connection {
 						return account.getEmail();
 					}
 				} else {
-					if (++count == maxTries) {
+					if (count++ == maxTries) {
 						throw new ConnectorException("Cannot create user " + account.getEmail());					
 					}
 				}
