@@ -12,8 +12,10 @@ public class IceWarpConfiguration extends AbstractConfiguration {
     private String username;
     private GuardedString password;
     private String domain;
-	// user / group
+    // object class __ACOUNT__ or __GROUP__
     private String object;
+    private Boolean debug;
+    private int maxTries;
 
     @ConfigurationProperty(displayMessageKey = "host.display",
             helpMessageKey = "host.help", order = 1,
@@ -63,6 +65,26 @@ public class IceWarpConfiguration extends AbstractConfiguration {
     }
     public void setObject(String object) {
         this.object = object;
+    }
+
+    @ConfigurationProperty(displayMessageKey = "debug.display",
+            helpMessageKey = "debug.help", order = 6,
+            required = true, confidential = false)
+    public Boolean getDebug() {
+        return debug;
+    }
+    public void setDebug(Boolean debug) {
+        this.debug = debug;
+    }
+    
+    @ConfigurationProperty(displayMessageKey = "maxtries.display",
+            helpMessageKey = "maxtries.help", order = 7,
+            required = true, confidential = false)
+    public int getMaxTries() {
+        return maxTries;
+    }
+    public void setMaxTries(int maxTries) {
+        this.maxTries = maxTries;
     }
 
     @Override

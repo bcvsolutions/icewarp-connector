@@ -33,7 +33,7 @@
     
   <groupId>eu.bcvsolutions</groupId>
   <artifactId>icewarp-connector</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <name>IceWarp connector</name>
   <packaging>jar</packaging>
 
@@ -105,6 +105,21 @@
     
   <build>
     <plugins>
+    <!-- For development -->
+      <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-jar-plugin</artifactId>
+		<configuration>
+			<archive>
+				<addMavenDescriptor>false</addMavenDescriptor>
+				<manifestEntries>
+					<ConnectorBundle-FrameworkVersion>${connid.version}</ConnectorBundle-FrameworkVersion>
+					<ConnectorBundle-Name>${project.artifactId}</ConnectorBundle-Name>
+					<ConnectorBundle-Version>${project.version}</ConnectorBundle-Version>
+				</manifestEntries>
+			</archive>
+		</configuration>
+	  </plugin>
       <!-- Disable any licese check -->  
       <plugin>        
         <groupId>com.mycila.maven-license-plugin</groupId>
